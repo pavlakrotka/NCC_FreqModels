@@ -444,3 +444,73 @@ results_setting_3_pow <- sim_study_par(nsim = n_sim, scenarios = setting_3_pow, 
 write_csv(results_setting_3_pow, "results/results_setting_3_pow.csv")
 
 ###########################################################################################################################################################################################
+
+# SETTING 3 - Additional simulations
+
+## - 4 treatment arms
+## - Different linear time trend (differing also within arms)
+## - Varying lambda and calendar time unit size
+## - Aim: evaluate mixed models with interaction
+
+## Type I error rate:
+set.seed(11)
+setting_3_alpha_add <- data.frame(num_arms = 4, 
+                                  n_arm = 250, 
+                                  d1 = 250*0,
+                                  d2 = 250*1,
+                                  d3 = 250*2,
+                                  d4 = 250*3,
+                                  period_blocks = 2, 
+                                  mu0 = 0,
+                                  sigma = 1,
+                                  theta1 = 0,
+                                  theta2 = 0,
+                                  theta3 = 0,
+                                  theta4 = 0,
+                                  lambda0 = 0,
+                                  lambda1 = rep(seq(-0.5, 0.5, length.out = 9)*1, each = 3),
+                                  lambda2 = rep(seq(-0.5, 0.5, length.out = 9)*2, each = 3),
+                                  lambda3 = 0,
+                                  lambda4 = rep(seq(-0.5, 0.5, length.out = 9)*3, each = 3),
+                                  trend = "linear",
+                                  alpha = 0.025,
+                                  ncc = TRUE,
+                                  unit_size = rep(c(25, 50, 100), 9),
+                                  trend_case = "diff_124_add")
+
+results_setting_3_alpha_add <- sim_study_par(nsim = n_sim, scenarios = setting_3_alpha_add, arms = c(3), models = c("mixmodel_int", "mixmodel_int_cal", "fixmodel", "sepmodel"), endpoint = "cont", perc_cores = 0.99)
+write_csv(results_setting_3_alpha_add, "results/results_setting_3_alpha_add.csv")
+
+
+
+
+## Power:
+set.seed(12)
+setting_3_pow_add <- data.frame(num_arms = 4, 
+                                n_arm = 250, 
+                                d1 = 250*0,
+                                d2 = 250*1,
+                                d3 = 250*2,
+                                d4 = 250*3,
+                                period_blocks = 2, 
+                                mu0 = 0,
+                                sigma = 1,
+                                theta1 = 0.25,
+                                theta2 = 0.25,
+                                theta3 = 0.25,
+                                theta4 = 0.25,
+                                lambda0 = 0,
+                                lambda1 = rep(seq(-0.5, 0.5, length.out = 9)*1, each = 3),
+                                lambda2 = rep(seq(-0.5, 0.5, length.out = 9)*2, each = 3),
+                                lambda3 = 0,
+                                lambda4 = rep(seq(-0.5, 0.5, length.out = 9)*3, each = 3),
+                                trend = "linear",
+                                alpha = 0.025,
+                                ncc = TRUE,
+                                unit_size = rep(c(25, 50, 100), 9),
+                                trend_case = "diff_124_add")
+
+results_setting_3_pow_add <- sim_study_par(nsim = n_sim, scenarios = setting_3_pow_add, arms = c(3), models = c("mixmodel_int", "mixmodel_int_cal", "fixmodel", "sepmodel"), endpoint = "cont", perc_cores = 0.99)
+write_csv(results_setting_3_pow_add, "results/results_setting_3_pow_add.csv")
+
+###########################################################################################################################################################################################

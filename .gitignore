@@ -47,3 +47,11 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+simulations/results/results_setting_3_alpha_old.csv
+
+simulations/results/results_setting_3_pow_old.csv
+
+simulations/figures/mixint_alpha_pow_lambda_all_units_old.png
+
+simulations/figures/mixint_alpha_pow_lambda_old.png

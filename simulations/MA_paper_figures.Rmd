@@ -157,50 +157,20 @@ data_seasonal_1 <- datasim_cont(num_arms = 4, n_arm = 250, d = 250*c(0:3), theta
 
 data_seasonal_2 <- datasim_cont(num_arms = 4, n_arm = 250, d = 250*c(0:3), theta=rep(0, 4), lambda = rep(0.15, 5), sigma = 1, trend = "seasonal", n_wave = 2, full = T)$Data
 
-ggarrange(ggplot(data_lin) +
-            geom_point(aes(x=j, y=means), color="#111d4f") +
-            theme_bw() +
-            theme(plot.title = element_text(hjust = 0.5)) +
-            labs(x="Patient recruitment", y=TeX("Mean response under $H_0$"), title = "Linear trend"),
-          
-          ggplot(data_step) +
-            geom_point(aes(x=j, y=means), color="#111d4f") +
-            theme_bw() +
-            theme(plot.title = element_text(hjust = 0.5)) +
-            labs(x="Patient recruitment", y=TeX("Mean response under $H_0$"), title = "Stepwise trend") +
-            scale_y_continuous(breaks = seq(0, 0.45, by=0.15), labels = seq(0, 0.45, by=0.15)),
-          
-          ggplot(data_inv_u_pos) +
-            geom_point(aes(x=j, y=means), color="#111d4f") +
-            theme_bw() +
-            theme(plot.title = element_text(hjust = 0.5)) +
-            labs(x="Patient recruitment", y=TeX("Mean response under $H_0$"), title = TeX("Inverted-U trend with positive $\\lambda$")) +
-            scale_y_continuous(breaks = seq(0, 0.075, length.out=4), labels = seq(0, 0.075, length.out=4)),
-          
-          ggplot(data_inv_u_neg) +
-            geom_point(aes(x=j, y=means), color="#111d4f") +
-            theme_bw() +
-            theme(plot.title = element_text(hjust = 0.5)) +
-            labs(x="Patient recruitment", y=TeX("Mean response under $H_0$"), title = TeX("Inverted-U trend with negative $\\lambda$")) +
-            scale_y_continuous(breaks = seq(-0.075, 0, length.out=4), labels = seq(-0.075, 0, length.out=4)),
-          
-          ggplot(data_seasonal_1) +
-            geom_point(aes(x=j, y=means), color="#111d4f") +
-            theme_bw() +
-            theme(plot.title = element_text(hjust = 0.5)) +
-            labs(x="Patient recruitment", y=TeX("Mean response under $H_0$"), title = TeX("Seasonal trend with $\\psi=1$")) +
-            scale_y_continuous(breaks = seq(-0.15, 0.15, length.out=5), labels = seq(-0.15, 0.15, length.out=5)),
-          
-          ggplot(data_seasonal_2) +
-            geom_point(aes(x=j, y=means), color="#111d4f") +
-            theme_bw() +
-            theme(plot.title = element_text(hjust = 0.5)) +
-            labs(x="Patient recruitment", y=TeX("Mean response under $H_0$"), title = TeX("Seasonal trend with $\\psi=2$")) +
-            scale_y_continuous(breaks = seq(-0.15, 0.15, length.out=5), labels = seq(-0.15, 0.15, length.out=5)),
-          ncol = 3, nrow = 2)
+data_trend <- rbind(data_lin %>% mutate(shape = "Linear trend"),
+                    data_step %>% mutate(shape = "Stepwise trend"),
+                    data_inv_u_pos %>% mutate(shape = "Inverted-U trend"),
+                    data_seasonal_1 %>% mutate(shape = "Seasonal trend; 1 cycle"),
+                    data_seasonal_2 %>% mutate(shape = "Seasonal trend; 2 cycles"))
 
+ggplot(data_trend) +
+  geom_point(aes(x=j, y=means), color="darkred") +
+  theme_bw(base_size = 13.8) +
+  facet_grid(.~shape) +
+  labs(x="Patient recruitment", y=TeX("Mean response under $H_0$")) +
+  scale_y_continuous(breaks = seq(-0.15, 0.45, by=0.15), labels = seq(-0.15, 0.45, by=0.15))
 
-ggsave("figures/trend_patterns.png", width = 10, height = 6)
+ggsave("figures/trend_patterns.png", width = 10, height = 4)
 ```
 
 
@@ -234,7 +204,7 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(study_arm==5 & d2==400)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda0, reject_h0, color=model)) +
             geom_point(aes(lambda0, reject_h0, color=model)) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             facet_grid(~ trend,
                        labeller = labeller(trend  = as_labeller(trend_names))) +
@@ -277,7 +247,7 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(study_arm==5 & lambda0==0.5)
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(d2, reject_h0, color=model)) +
             geom_point(aes(d2, reject_h0, color=model)) +
-            labs(x=TeX("$d$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$d$"), y="Type I error rate", color="Analysis approach:") +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             facet_grid(~ trend,
                        labeller = labeller(trend  = as_labeller(trend_names))) +
@@ -318,7 +288,7 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(d2==200 & lambda0==0.5)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(study_arm, reject_h0, color=model)) +
             geom_point(aes(study_arm, reject_h0, color=model)) +
-            labs(x="Study arm", y="Type I error", color="Analysis approach:") +
+            labs(x="Study arm", y="Type I error rate", color="Analysis approach:") +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             facet_grid(~ trend,
                        labeller = labeller(trend  = as_labeller(trend_names))) +
@@ -362,7 +332,7 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(d2==400)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda0, reject_h0, color=model)) +
             geom_point(aes(lambda0, reject_h0, color=model)) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             facet_grid(study_arm ~ trend,
                        labeller = labeller(trend  = as_labeller(trend_names))) +
@@ -404,7 +374,7 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(lambda0==0.5)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(d2, reject_h0, color=model)) +
             geom_point(aes(d2, reject_h0, color=model)) +
-            labs(x=TeX("$d$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$d$"), y="Type I error rate", color="Analysis approach:") +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             facet_grid(study_arm ~ trend,
                        labeller = labeller(trend  = as_labeller(trend_names))) +
@@ -445,7 +415,7 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(d2 %in% c(0, 100, 200, 300, 
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(study_arm, reject_h0, color=model)) +
             geom_point(aes(study_arm, reject_h0, color=model)) +
-            labs(x="Study arm", y="Type I error", color="Analysis approach:") +
+            labs(x="Study arm", y="Type I error rate", color="Analysis approach:") +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             facet_grid(d2 ~ trend,
                        labeller = labeller(trend  = as_labeller(trend_names))) +
@@ -506,7 +476,7 @@ ggarrange(ggplot(results_setting_2_alpha %>% filter(study_arm==3, lambda1==0.125
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(unit_size, reject_h0, color = as.factor(model))) +
             geom_point(aes(unit_size, reject_h0, color = as.factor(model)), size = 1) +
-            labs(x="Calendar unit size", y="Type I error", color="Analysis approach:") +
+            labs(x="Calendar unit size", y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Fixed - calendar", "Separate analysis"), values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             #coord_cartesian(ylim = c(0, 0.1)) +
@@ -548,7 +518,7 @@ ggarrange(ggplot(results_setting_2_alpha %>% filter(study_arm==3, unit_size==100
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Fixed - calendar", "Separate analysis"), values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             #coord_cartesian(ylim = c(0, 0.1)) +
@@ -595,7 +565,7 @@ ggarrange(ggplot(results_setting_2_alpha %>% filter(study_arm==3, unit_size %in%
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Fixed - calendar", "Separate analysis"), values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             #coord_cartesian(ylim = c(0, 0.1)) +
@@ -639,7 +609,7 @@ ggarrange(ggplot(results_setting_2_alpha %>% filter(unit_size==100)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Fixed - calendar", "Separate analysis"), values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             #coord_cartesian(ylim = c(0, 0.1)) +
@@ -683,7 +653,7 @@ ggarrange(ggplot(results_setting_2_alpha %>% filter(lambda1==0.125)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(unit_size, reject_h0, color = as.factor(model))) +
             geom_point(aes(unit_size, reject_h0, color = as.factor(model)), size = 1) +
-            labs(x="Calendar unit size", y="Type I error", color="Analysis approach:") +
+            labs(x="Calendar unit size", y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Fixed - calendar", "Separate analysis"), values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             #coord_cartesian(ylim = c(0, 0.1)) +
@@ -730,7 +700,7 @@ ggarrange(ggplot(results_setting_2_mix_alpha %>% filter(study_arm==3, unit_size=
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Mixed - period", "Mixed (AR1) - period", 
                                           "Mixed (AR1) - calendar", "Mixed - calendar", "Separate analysis"),
                                values = my_palette, limits = force) +
@@ -779,7 +749,7 @@ ggarrange(ggplot(results_setting_2_mix_alpha %>% filter(unit_size==100)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Mixed - period", "Mixed (AR1) - period", 
                                           "Mixed (AR1) - calendar", "Mixed - calendar", "Separate analysis"),
                                values = my_palette, limits = force) +
@@ -829,7 +799,7 @@ ggarrange(ggplot(results_setting_2_mix_alpha %>% filter(study_arm==3)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Mixed - period", "Mixed (AR1) - period", 
                                           "Mixed (AR1) - calendar", "Mixed - calendar", "Separate analysis"),
                                values = my_palette, limits = force) +
@@ -897,7 +867,7 @@ ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5, bs_deg
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             #coord_cartesian(ylim = c(0, 0.1)) +
@@ -947,7 +917,7 @@ ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(bs_degree==3, unit_s
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             #coord_cartesian(ylim = c(0, 0.1)) +
@@ -994,7 +964,7 @@ ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==3, bs_deg
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             #coord_cartesian(ylim = c(0, 0.1)) +
@@ -1036,11 +1006,11 @@ ggsave("figures/splines_alpha_pow_lambda_trend_all_units.png", width = 10, heigh
 
 
 ```{r, fig.width=10, fig.height=12}
-ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==3, unit_size==100)) +
+ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5, unit_size==100)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             #coord_cartesian(ylim = c(0, 0.1)) +
@@ -1052,7 +1022,7 @@ ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==3, unit_s
             theme_bw(base_size = 13.8) +
             theme(legend.text=element_text(size = 13)),
           
-          ggplot(results_setting_1_splines_pow %>% filter(study_arm==3, unit_size==100)) +
+          ggplot(results_setting_1_splines_pow %>% filter(study_arm==5, unit_size==100)) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
             labs(x=TeX("$\\lambda$"), y="Power", color="Analysis approach:") +
@@ -1093,7 +1063,7 @@ ggarrange(ggplot(results_setting_3_alpha %>% filter(study_arm==3, unit_size==100
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda_1$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda_1$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Mixed w. inter. - period", "Mixed w. inter. - calendar", "Separate analysis"),
                                values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
@@ -1140,7 +1110,7 @@ ggarrange(ggplot(results_setting_3_alpha %>% filter(study_arm==3)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error", color="Analysis approach:") +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
             scale_color_manual(labels = c("Fixed - period", "Mixed w. inter. - period", "Mixed w. inter. - calendar", "Separate analysis"),
                                values = my_palette, limits = force) +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
