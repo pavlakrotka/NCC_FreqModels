@@ -1,0 +1,247 @@
+---
+title: "Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls: Case study"
+author: "Pavla Krotka, Martin Posch, Marta Bofill Roig"
+date: "2024"
+output: 
+  html_document:
+    toc: yes
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    code_folding: show 
+    theme: flatly
+---
+
+```{r setup, include = FALSE}
+library(knitr)
+opts_chunk$set(collapse = TRUE,
+               echo = TRUE,
+               comment = "#>",
+               warning = FALSE,
+               message = FALSE,
+               fig.align = "center",
+               out.width = "100%")
+```
+
+```{r, include=FALSE}
+library(ggpubr)
+library(scales)
+library(kableExtra)
+library(latex2exp)
+library(tidyverse)
+library(splines)
+library(lmerTest)
+library(spaMM)
+library(viridis)
+
+#devtools::install_github("pavlakrotka/NCC", build = TRUE, force=T)
+library(NCC)
+set.seed(717)
+```
+
+
+# Introduction
+
+This file contains all code to reproduce the case study presented in Section 5 of the paper *"Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"* by Pavla Krotka, Martin Posch and Marta Bofill Roig.
+
+
+# Data preparation
+
+```{r}
+improve_data <- read_csv("final_baseline.csv")
+```
+
+
+```{r}
+data_mod <- improve_data %>%
+  filter(Study=="Abbvie", Item_number==35, Visit %in% c(1, 11, 14, 18)) %>%
+  select(ID, response = DV, TRT, baseline_date, TIME, Treatment_number, Visit, Item_number) %>%
+  mutate(treatment = as.factor(case_when(Treatment_number==1 ~ 1,
+                                         Treatment_number==2 ~ 2,
+                                         Treatment_number==3 ~ 0))) %>%
+  arrange(baseline_date) %>%
+  mutate(recruitment = as.numeric(baseline_date-min(baseline_date)+1),
+         period = ifelse(baseline_date<as.Date("2018-06-01"), 1, 2),
+         treatment_mod = as.factor(ifelse((period==1 & treatment==2), NA, as.numeric(treatment)-1)))
+
+data_mod$response <- as.numeric(data_mod$response)
+data_mod$TRT <- factor(data_mod$TRT, levels = c("Abbvie-Placebo", "Abbvie-ABBV-8E12 2000 MG", "Abbvie-ABBV-8E12 4000 MG"))
+data_mod$period <- as.factor(data_mod$period)
+
+data_mod_wide <- data_mod %>%
+  select(-TIME) %>%
+  pivot_wider(names_from = Visit, names_prefix = "response_visit_", values_from = response) %>%
+  group_by(ID) %>%
+  mutate(baseline_change_11 = response_visit_11-response_visit_1,
+         baseline_change_14 = response_visit_14-response_visit_1,
+         baseline_change_18 = response_visit_18-response_visit_1,
+         cal_time = factor(ceiling(recruitment/90), levels = c(1:9)))
+
+data_case_study <- data_mod_wide %>%
+  select(ID, recruitment, baseline_date, response_visit_1, treatment = treatment_mod, period, cal_time) %>%
+  na.omit()
+```
+
+
+
+# Abbvie trial data - baseline measurement
+
+## Sample sizes per treatment arm
+
+```{r}
+table(data_case_study$treatment)
+```
+
+## Sample size per period
+
+```{r}
+table(data_case_study$period)
+```
+
+
+## Sample size per treatment arm and period
+
+```{r}
+table(data_case_study$treatment, data_case_study$period)
+```
+
+## Sample sizes per calendar time interval
+
+```{r}
+table(data_case_study$cal_time)
+```
+
+
+## Sample sizes per treatment arm and calendar time interval
+
+```{r}
+table(data_case_study$treatment, data_case_study$cal_time)
+```
+
+
+## Time trend
+
+```{r}
+test_trend <- lm(response_visit_1 ~ treatment + recruitment, data_case_study)
+summary(test_trend)
+```
+
+
+```{r}
+ggplot(data_case_study) +
+  geom_point(aes(recruitment, response_visit_1, color = treatment)) +
+  geom_line(aes(recruitment, fitted(test_trend), color = treatment), size = 1) +
+  labs(x = "Trial duration in days", y = "PSPRS score at baseline", color = "Treatment:") +
+  scale_color_viridis(discrete = T) +
+  geom_vline(xintercept = 90*c(0:9), linetype = "dashed", color = "gray40") +
+  geom_vline(xintercept = 495, linetype = "dashed", color = "darkred", size = 1) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+ggsave("figures/casestudy_trialdata.png", width = 7, height = 5)
+ggsave("figures/casestudy_trialdata.pdf", width = 7, height = 5)
+```
+
+# Analysis approaches
+
+## Regression model - period adjustment
+
+```{r}
+# Regression model - period adjustment
+mod_lm_per <- lm(response_visit_1 ~ treatment + period, data_case_study)
+summary(mod_lm_per)
+```
+
+## Regression model - calendar time adjustment
+
+```{r}
+# Regression model - calendar time adjustment
+mod_lm_cal <- lm(response_visit_1 ~ treatment + cal_time, data_case_study)
+summary(mod_lm_cal)
+```
+## Mixed model - period adjustment
+
+```{r}
+# Mixed model - period adjustment
+mod_mix_per <- lmer(response_visit_1 ~ treatment + (1 | period), data_case_study)
+summary(mod_mix_per)
+```
+
+## Mixed model - calendar time adjustment
+
+```{r}
+# Mixed model - calendar time adjustment
+mod_mix_cal <- lmer(response_visit_1 ~ treatment + (1 | cal_time), data_case_study)
+summary(mod_mix_cal)
+```
+
+## Mixed model (AR1) - period adjustment
+
+```{r}
+# Mixed model - period adjustment
+mod_mix_ar1_per <- fitme(response_visit_1 ~ treatment + AR1(1 | period), data_case_study)
+
+summary.HLfit(mod_mix_ar1_per)
+res <- summary.HLfit(mod_mix_ar1_per, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_per, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["treatment2", "t-value"]), eff_df)) # p-value
+```
+
+## Mixed model (AR1) - calendar time adjustment
+
+```{r}
+# Mixed model - calendar time adjustment
+mod_mix_ar1_cal <- fitme(response_visit_1 ~ treatment + AR1(1 | cal_time), data_case_study)
+
+summary.HLfit(mod_mix_ar1_cal)
+res <- summary.HLfit(mod_mix_ar1_cal, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_cal, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+#pt(res$beta_table["treatment2", "t-value"], eff_df)*2
+#2*pt(-abs(res$beta_table["treatment2", "t-value"]), eff_df)
+2*(1-pt(abs(res$beta_table["treatment2", "t-value"]), eff_df)) # p-value
+```
+
+## Spline regression - period adjustment
+
+```{r}
+# Spline regression - period adjustment
+mod_splines_per <- lm(response_visit_1 ~ treatment + bs(recruitment, knots = c(495), degree = 3), data_case_study)
+summary(mod_splines_per)
+```
+
+## Spline regression - calendar time adjustment
+
+```{r}
+# Spline regression - calendar time adjustment
+cal_time_start <- c()
+for (i in unique(data_case_study$cal_time)) {
+  cal_time_start <- c(cal_time_start, max(data_case_study[data_case_study$cal_time==i,]$recruitment))
+  }
+
+mod_splines_cal <- lm(response_visit_1 ~ treatment + bs(recruitment, knots = cal_time_start, degree = 3), data_case_study)
+summary(mod_splines_cal)
+```
+
+## Pooled analysis
+
+```{r}
+# Pooled analysis
+mod_pool <- lm(response_visit_1 ~ treatment, data_case_study %>% filter(treatment %in% c(0, 2)))
+summary(mod_pool)
+```
+
+## Separate analysis
+
+```{r}
+# Separate analysis
+mod_sep <- lm(response_visit_1 ~ treatment, data_case_study %>% filter(treatment %in% c(0, 2), period==2))
+summary(mod_sep)
+```
