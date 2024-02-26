@@ -209,6 +209,7 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(study_arm==5 & lambda0==0.5)
   border("white")
 
 ggsave("figures/fixmodel_alpha_pow_d.png", width = 10, height = 5)
+ggsave("figures/fixmodel_alpha_pow_d.pdf", width = 10, height = 5)
 ```
 
 
@@ -1059,7 +1060,7 @@ ggsave("figures/mixmodel_alpha_pow_lambda_all_units.pdf", width = 10, height = 1
 - Rows - Calendar time unit sizes
 - T1E and power with respect to the strength of the time trend $\lambda_1$ under different time trend cases
 
-```{r, fig.width=12, fig.height=12}
+```{r, fig.width=10, fig.height=12}
 ggarrange(ggplot(rbind(results_setting_3_alpha, results_setting_3_alpha_add) %>% filter(study_arm==3)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
@@ -1074,7 +1075,8 @@ ggarrange(ggplot(rbind(results_setting_3_alpha, results_setting_3_alpha_add) %>%
             scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
             scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
             theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
+            theme(legend.text=element_text(size = 13),
+                  strip.text = element_text(size = 9.4)),
           
           ggplot(rbind(results_setting_3_pow, results_setting_3_pow_add) %>% filter(study_arm==3)) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
@@ -1088,13 +1090,14 @@ ggarrange(ggplot(rbind(results_setting_3_alpha, results_setting_3_alpha_add) %>%
             scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
             scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
             theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
+            theme(legend.text=element_text(size = 13),
+                  strip.text = element_text(size = 9.4)),
           
           common.legend = T, legend = "bottom",
           nrow = 2) + 
   bgcolor("white") + 
   border("white")
 
-ggsave("figures/mixint_alpha_pow_lambda_all_units.png", width = 12, height = 12)
-ggsave("figures/mixint_alpha_pow_lambda_all_units.pdf", width = 12, height = 12)
+ggsave("figures/mixint_alpha_pow_lambda_all_units.png", width = 10, height = 12)
+ggsave("figures/mixint_alpha_pow_lambda_all_units.pdf", width = 10, height = 12)
 ```
