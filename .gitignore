@@ -55,3 +55,5 @@ simulations/results/results_setting_3_pow_old.csv
 simulations/figures/mixint_alpha_pow_lambda_all_units_old.png
 
 simulations/figures/mixint_alpha_pow_lambda_old.png
+
+case_study/final_baseline.csv
