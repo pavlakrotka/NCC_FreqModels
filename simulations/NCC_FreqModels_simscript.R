@@ -1,4 +1,4 @@
-# "Statistical modeling to adjust for time trends in platform trials utilising non-concurrent controls"
+# "Statistical modeling to adjust for time trends in adaptive platform trials utilising non-concurrent controls"
 # Pavla Krotka, Martin Posch, Marta Bofill Roig
 # 2024
 
@@ -20,7 +20,7 @@ n_sim <- 10000
 ## - 10 treatment arms
 ## - Linear time trend
 ## - Varying d and lambda
-## - Aim: evaluate the generalization of the model-based approach with period adjustment and spline regression
+## - Aim: evaluate the fixed effect model with period adjustment and spline regression
 
 ## Sample sizes:
 # get_ss_matrix(num_arms = 10, n_arm = 250, d = 250*(0:9))
@@ -376,7 +376,7 @@ write_csv(results_setting_2_mix_pow, "results/results_setting_2_mix_pow.csv")
 
 ## - 4 treatment arms
 ## - Different linear time trend
-## - Varying lambda and calendar time unit size
+## - Varying lambda and trend case
 ## - Aim: evaluate mixed models with interaction
 
 ## Sample sizes:
@@ -448,8 +448,8 @@ write_csv(results_setting_3_pow, "results/results_setting_3_pow.csv")
 # SETTING 3 - Additional simulations
 
 ## - 4 treatment arms
-## - Different linear time trend (differing also within arms)
-## - Varying lambda and calendar time unit size
+## - Different linear time trend (differing also within arms 1, 2 and 4)
+## - Varying lambda
 ## - Aim: evaluate mixed models with interaction
 
 ## Type I error rate:
