@@ -30,6 +30,11 @@ The repository is structured as follows:
     *figures*. For data privacy reasons the dataset used for the
     illustration could not be uploaded.
 
+## NCC R-package
+
+The version of the `NCC` [R-package](https://pavlakrotka.github.io/NCC/)
+that was used for the simulation study is included in this repository.
+
 ------------------------------------------------------------------------
 
 **Funding**

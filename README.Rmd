@@ -20,6 +20,10 @@ The repository is structured as follows:
 - Folder **case_study**:
 
     - *NCC_FreqModels_case_study.Rmd*: This file includes the code used for illustrating the use of the methods from the paper on the data from the ABBV-8E12 trial, as shown in Section 5. It also contains the code to reproduce Figure 11, which is saved in the subfolder *figures*. For data privacy reasons the dataset used for the illustration could not be uploaded.
+    
+## NCC R-package
+
+The version of the `NCC` [R-package](https://pavlakrotka.github.io/NCC/) that was used for the simulation study is included in this repository.
 
 ------------------------------------------------------------------------
 
