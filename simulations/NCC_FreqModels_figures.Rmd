@@ -29,6 +29,8 @@ library(kableExtra)
 library(latex2exp)
 library(ggpubr)
 library(scales)
+
+# devtools::install_github("pavlakrotka/NCC@v1.2", force = TRUE)
 library(NCC)
 ```
 

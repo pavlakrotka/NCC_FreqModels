@@ -35,6 +35,15 @@ The repository is structured as follows:
 The version of the `NCC` [R-package](https://pavlakrotka.github.io/NCC/)
 that was used for the simulation study is included in this repository.
 
+This version is labeled as Release 1.2 on
+[GitHub](https://github.com/pavlakrotka/NCC) and can be installed by
+running the following code:
+
+``` r
+# install.packages("devtools") 
+devtools::install_github("pavlakrotka/NCC@v1.2", force = TRUE, build_vignettes = TRUE)
+```
+
 ------------------------------------------------------------------------
 
 **Funding**
