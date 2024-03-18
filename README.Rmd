@@ -38,4 +38,4 @@ devtools::install_github("pavlakrotka/NCC@v1.2", force = TRUE, build_vignettes =
 
 This research was funded in whole or in part by the Austrian Science Fund (FWF) [ESP 442 ESPRIT-Programm].
 
-P.K. and M.P. received funding from the European Joint Programme on Rare Diseases (Improve-PSP).
+P.K., M.P., M.G., and G.H. received funding from the European Joint Programme on Rare Diseases (Improve-PSP).
