@@ -1,6 +1,6 @@
 ---
 title: "Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls: Case study"
-author: "Pavla Krotka, Martin Posch, Marta Bofill Roig"
+author: "Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig"
 date: "2024"
 output: 
   html_document:
