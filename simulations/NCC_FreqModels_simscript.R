@@ -1,5 +1,5 @@
 # "Statistical modeling to adjust for time trends in adaptive platform trials utilising non-concurrent controls"
-# Pavla Krotka, Martin Posch, Marta Bofill Roig
+# Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig
 # 2024
 
 # This script contains all code to reproduce the simulations presented in the main paper and supplementary material

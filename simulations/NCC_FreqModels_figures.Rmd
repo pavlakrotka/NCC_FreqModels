@@ -1,6 +1,6 @@
 ---
 title: "Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"
-author: "Pavla Krotka, Martin Posch, Marta Bofill Roig"
+author: "Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig"
 date: "2024"
 output: 
   html_document:
@@ -88,7 +88,7 @@ pred_int <- c(p-z.alpha*sd,p+z.alpha*sd)
 
 # Introduction
 
-This file contains all code to reproduce the figures presented in Section 4 and the Supplementary material of the paper *"Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"* by Pavla Krotka, Martin Posch and Marta Bofill Roig.
+This file contains all code to reproduce the figures presented in Section 4 and the Supplementary material of the paper *"Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"* by Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, and Marta Bofill Roig.
 
 
 # Figure 3 - Time trend patterns
