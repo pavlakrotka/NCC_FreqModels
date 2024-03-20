@@ -1783,44 +1783,8 @@ summary(mod_lm_cal)
 #&gt; Multiple R-squared:  0.03916,    Adjusted R-squared:  0.007554 
 #&gt; F-statistic: 1.239 on 10 and 304 DF,  p-value: 0.2653</code></pre>
 </div>
-<div id="mixed-model---period-adjustment" class="section level2" number="4.3">
-<h2><span class="header-section-number">4.3</span> Mixed model - period
-adjustment</h2>
-<pre class="r"><code># Mixed model - period adjustment
-mod_mix_per &lt;- lmer(response_visit_1 ~ treatment + (1 | period), data_case_study)
-summary(mod_mix_per)
-#&gt; Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [
-#&gt; lmerModLmerTest]
-#&gt; Formula: response_visit_1 ~ treatment + (1 | period)
-#&gt;    Data: data_case_study
-#&gt; 
-#&gt; REML criterion at convergence: 2433
-#&gt; 
-#&gt; Scaled residuals: 
-#&gt;      Min       1Q   Median       3Q      Max 
-#&gt; -2.19125 -0.69576 -0.01363  0.62362  2.91580 
-#&gt; 
-#&gt; Random effects:
-#&gt;  Groups   Name        Variance Std.Dev.
-#&gt;  period   (Intercept)   6.048   2.459  
-#&gt;  Residual             135.606  11.645  
-#&gt; Number of obs: 315, groups:  period, 2
-#&gt; 
-#&gt; Fixed effects:
-#&gt;             Estimate Std. Error       df t value Pr(&gt;|t|)  
-#&gt; (Intercept)  36.9171     2.0326   1.3372  18.162   0.0145 *
-#&gt; treatment1   -0.3583     1.4769 311.1268  -0.243   0.8085  
-#&gt; treatment2   -0.2716     1.8783 289.2617  -0.145   0.8851  
-#&gt; ---
-#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-#&gt; 
-#&gt; Correlation of Fixed Effects:
-#&gt;            (Intr) trtmn1
-#&gt; treatment1 -0.368       
-#&gt; treatment2 -0.277  0.386</code></pre>
-</div>
-<div id="mixed-model---calendar-time-adjustment" class="section level2" number="4.4">
-<h2><span class="header-section-number">4.4</span> Mixed model -
+<div id="mixed-model---calendar-time-adjustment" class="section level2" number="4.3">
+<h2><span class="header-section-number">4.3</span> Mixed model -
 calendar time adjustment</h2>
 <pre class="r"><code># Mixed model - calendar time adjustment
 mod_mix_cal &lt;- lmer(response_visit_1 ~ treatment + (1 | cal_time), data_case_study)
@@ -1855,52 +1819,8 @@ summary(mod_mix_cal)
 #&gt; treatment1 -0.611       
 #&gt; treatment2 -0.458  0.410</code></pre>
 </div>
-<div id="mixed-model-ar1---period-adjustment" class="section level2" number="4.5">
-<h2><span class="header-section-number">4.5</span> Mixed model (AR1) -
-period adjustment</h2>
-<pre class="r"><code># Mixed model - period adjustment
-mod_mix_ar1_per &lt;- fitme(response_visit_1 ~ treatment + AR1(1 | period), data_case_study)
-
-summary.HLfit(mod_mix_ar1_per)
-#&gt; formula: response_visit_1 ~ treatment + AR1(1 | period)
-#&gt; ML: Estimation of corrPars, lambda and phi by ML.
-#&gt;     Estimation of fixed effects by ML.
-#&gt; Estimation of lambda and phi by &#39;outer&#39; ML, maximizing logL.
-#&gt; family: gaussian( link = identity ) 
-#&gt;  ------------ Fixed effects (beta) ------------
-#&gt;             Estimate Cond. SE t-value
-#&gt; (Intercept)  36.9163    1.047 35.2434
-#&gt; treatment1   -0.3578    1.470 -0.2434
-#&gt; treatment2   -0.2781    1.869 -0.1488
-#&gt;  --------------- Random effects ---------------
-#&gt; Family: gaussian( link = identity ) 
-#&gt;                    --- Correlation parameters:
-#&gt;   1.ARphi 
-#&gt; -0.999999 
-#&gt;            --- Variance parameters (&#39;lambda&#39;):
-#&gt; lambda = var(u) for u ~ Gaussian; 
-#&gt;    period  :  2.909  
-#&gt; # of obs: 315; # of groups: period, 2 
-#&gt;  -------------- Residual variance  ------------
-#&gt; phi estimate was 134.325 
-#&gt;  ------------- Likelihood values  -------------
-#&gt;                         logLik
-#&gt; logL       (p_v(h)): -1219.786
-res &lt;- summary.HLfit(mod_mix_ar1_per, verbose = FALSE)
-
-IC &lt;- get_any_IC(mod_mix_ar1_per, verbose = FALSE)
-IC
-#&gt;        marginal AIC:     conditional AIC:      dispersion AIC: 
-#&gt;            2451.5719            2446.3284            2445.5719 
-#&gt;        effective df: 
-#&gt;             311.1572
-eff_df &lt;- IC[&quot;       effective df:&quot;] # effective degrees of freedom
-
-2*(1-pt(abs(res$beta_table[&quot;treatment2&quot;, &quot;t-value&quot;]), eff_df)) # p-value
-#&gt; [1] 0.8818064</code></pre>
-</div>
-<div id="mixed-model-ar1---calendar-time-adjustment" class="section level2" number="4.6">
-<h2><span class="header-section-number">4.6</span> Mixed model (AR1) -
+<div id="mixed-model-ar1---calendar-time-adjustment" class="section level2" number="4.4">
+<h2><span class="header-section-number">4.4</span> Mixed model (AR1) -
 calendar time adjustment</h2>
 <pre class="r"><code># Mixed model - calendar time adjustment
 mod_mix_ar1_cal &lt;- fitme(response_visit_1 ~ treatment + AR1(1 | cal_time), data_case_study)
@@ -1940,13 +1860,11 @@ IC
 #&gt;             310.1366
 eff_df &lt;- IC[&quot;       effective df:&quot;] # effective degrees of freedom
 
-#pt(res$beta_table[&quot;treatment2&quot;, &quot;t-value&quot;], eff_df)*2
-#2*pt(-abs(res$beta_table[&quot;treatment2&quot;, &quot;t-value&quot;]), eff_df)
 2*(1-pt(abs(res$beta_table[&quot;treatment2&quot;, &quot;t-value&quot;]), eff_df)) # p-value
 #&gt; [1] 0.5937705</code></pre>
 </div>
-<div id="spline-regression---period-adjustment" class="section level2" number="4.7">
-<h2><span class="header-section-number">4.7</span> Spline regression -
+<div id="spline-regression---period-adjustment" class="section level2" number="4.5">
+<h2><span class="header-section-number">4.5</span> Spline regression -
 period adjustment</h2>
 <pre class="r"><code># Spline regression - period adjustment
 mod_splines_per &lt;- lm(response_visit_1 ~ treatment + bs(recruitment, knots = c(495), degree = 3), data_case_study)
@@ -1984,8 +1902,8 @@ summary(mod_splines_per)
 #&gt; Multiple R-squared:  0.03565,    Adjusted R-squared:  0.01686 
 #&gt; F-statistic: 1.898 on 6 and 308 DF,  p-value: 0.08086</code></pre>
 </div>
-<div id="spline-regression---calendar-time-adjustment" class="section level2" number="4.8">
-<h2><span class="header-section-number">4.8</span> Spline regression -
+<div id="spline-regression---calendar-time-adjustment" class="section level2" number="4.6">
+<h2><span class="header-section-number">4.6</span> Spline regression -
 calendar time adjustment</h2>
 <pre class="r"><code># Spline regression - calendar time adjustment
 cal_time_start &lt;- c()
@@ -2044,8 +1962,8 @@ summary(mod_splines_cal)
 #&gt; Multiple R-squared:  0.08037,    Adjusted R-squared:  0.04065 
 #&gt; F-statistic: 2.023 on 13 and 301 DF,  p-value: 0.0188</code></pre>
 </div>
-<div id="pooled-analysis" class="section level2" number="4.9">
-<h2><span class="header-section-number">4.9</span> Pooled analysis</h2>
+<div id="pooled-analysis" class="section level2" number="4.7">
+<h2><span class="header-section-number">4.7</span> Pooled analysis</h2>
 <pre class="r"><code># Pooled analysis
 mod_pool &lt;- lm(response_visit_1 ~ treatment, data_case_study %&gt;% filter(treatment %in% c(0, 2)))
 summary(mod_pool)
@@ -2069,8 +1987,8 @@ summary(mod_pool)
 #&gt; Multiple R-squared:  0.004948,   Adjusted R-squared:  -0.0003733 
 #&gt; F-statistic: 0.9298 on 1 and 187 DF,  p-value: 0.3361</code></pre>
 </div>
-<div id="separate-analysis" class="section level2" number="4.10">
-<h2><span class="header-section-number">4.10</span> Separate
+<div id="separate-analysis" class="section level2" number="4.8">
+<h2><span class="header-section-number">4.8</span> Separate
 analysis</h2>
 <pre class="r"><code># Separate analysis
 mod_sep &lt;- lm(response_visit_1 ~ treatment, data_case_study %&gt;% filter(treatment %in% c(0, 2), period==2))

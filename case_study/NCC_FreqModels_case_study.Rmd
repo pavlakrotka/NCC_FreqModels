@@ -159,13 +159,6 @@ summary(mod_lm_per)
 mod_lm_cal <- lm(response_visit_1 ~ treatment + cal_time, data_case_study)
 summary(mod_lm_cal)
 ```
-## Mixed model - period adjustment
-
-```{r}
-# Mixed model - period adjustment
-mod_mix_per <- lmer(response_visit_1 ~ treatment + (1 | period), data_case_study)
-summary(mod_mix_per)
-```
 
 ## Mixed model - calendar time adjustment
 
@@ -175,21 +168,6 @@ mod_mix_cal <- lmer(response_visit_1 ~ treatment + (1 | cal_time), data_case_stu
 summary(mod_mix_cal)
 ```
 
-## Mixed model (AR1) - period adjustment
-
-```{r}
-# Mixed model - period adjustment
-mod_mix_ar1_per <- fitme(response_visit_1 ~ treatment + AR1(1 | period), data_case_study)
-
-summary.HLfit(mod_mix_ar1_per)
-res <- summary.HLfit(mod_mix_ar1_per, verbose = FALSE)
-
-IC <- get_any_IC(mod_mix_ar1_per, verbose = FALSE)
-IC
-eff_df <- IC["       effective df:"] # effective degrees of freedom
-
-2*(1-pt(abs(res$beta_table["treatment2", "t-value"]), eff_df)) # p-value
-```
 
 ## Mixed model (AR1) - calendar time adjustment
 
@@ -204,8 +182,6 @@ IC <- get_any_IC(mod_mix_ar1_cal, verbose = FALSE)
 IC
 eff_df <- IC["       effective df:"] # effective degrees of freedom
 
-#pt(res$beta_table["treatment2", "t-value"], eff_df)*2
-#2*pt(-abs(res$beta_table["treatment2", "t-value"]), eff_df)
 2*(1-pt(abs(res$beta_table["treatment2", "t-value"]), eff_df)) # p-value
 ```
 
