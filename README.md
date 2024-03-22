@@ -2,13 +2,12 @@ Statistical modeling to adjust for time trends in adaptive platform
 trials utilizing non-concurrent controls
 ================
 
-This is an accompanying repository for the paper *“Statistical modeling
+This is an accompanying repository for the paper [*“Statistical modeling
 to adjust for time trends in adaptive platform trials utilizing
-non-concurrent controls’’* by Pavla Krotka, Martin Posch, Mohamed
-Gewily, Günter Höglinger, and Marta Bofill Roig. It contains the code to
-reproduce all simulations and figures, as well as the case study
-presented in the paper.
-<!-- "[Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls](https://arxiv.org)". -->
+non-concurrent controls’’*](https://arxiv.org/abs/2403.14348) by Pavla
+Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, and Marta Bofill
+Roig. It contains the code to reproduce all simulations and figures, as
+well as the case study presented in the paper.
 
 The repository is structured as follows:
 
