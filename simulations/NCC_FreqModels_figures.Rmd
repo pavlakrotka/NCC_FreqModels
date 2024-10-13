@@ -1,5 +1,6 @@
 ---
 title: "Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"
+subtitle: "Data only until the evaluated arm leaves the trial"
 author: "Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig"
 date: "2024"
 output: 
@@ -30,7 +31,7 @@ library(latex2exp)
 library(ggpubr)
 library(scales)
 
-# devtools::install_github("pavlakrotka/NCC@v1.2", force = TRUE)
+# devtools::install_github("pavlakrotka/NCC@v1.3", force = TRUE)
 library(NCC)
 ```
 
@@ -90,8 +91,10 @@ pred_int <- c(p-z.alpha*sd,p+z.alpha*sd)
 
 This file contains all code to reproduce the figures presented in Section 4 and the Supplementary material of the paper *"Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"* by Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, and Marta Bofill Roig.
 
-
 # Figure 3 - Time trend patterns
+
+
+
 
 ```{r, fig.width = 10, fig.height = 4}
 # Time trend patterns
@@ -121,8 +124,8 @@ ggplot(data_trend) +
 
 ggsave("figures/trend_patterns.png", width = 10, height = 4)
 ggsave("figures/trend_patterns.pdf", width = 10, height = 4)
+ggsave("figures/trend_patterns.tiff", width = 10, height = 4)
 ```
-
 
 # SETTING 1 - 10 treatment arms, equal time trends
 
@@ -134,6 +137,7 @@ ggsave("figures/trend_patterns.pdf", width = 10, height = 4)
 - $d=400$
 - $n=250$ per experimental treatment arm
 - T1E and power with respect to the strength of the time trend $\lambda$
+
 
 ```{r, fig.width=10, fig.height=5}
 ggarrange(ggplot(results_setting_1_alpha %>% filter(study_arm==5 & d2==400)) +
@@ -170,6 +174,7 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(study_arm==5 & d2==400)) +
 
 ggsave("figures/fixmodel_alpha_pow_lambda.png", width = 10, height = 5)
 ggsave("figures/fixmodel_alpha_pow_lambda.pdf", width = 10, height = 5)
+ggsave("figures/fixmodel_alpha_pow_lambda.tiff", width = 10, height = 5)
 ```
 
 ### Figure 5
@@ -212,56 +217,111 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(study_arm==5 & lambda0==0.5)
 
 ggsave("figures/fixmodel_alpha_pow_d.png", width = 10, height = 5)
 ggsave("figures/fixmodel_alpha_pow_d.pdf", width = 10, height = 5)
+ggsave("figures/fixmodel_alpha_pow_d.tiff", width = 10, height = 5)
 ```
 
 
 ### Figure 6
 
 - Evaluated arm: 5
+- $\lambda=0.5$
 - Degree of B-spline: 3 (cubic)
-- Calendar time unit size: 100
+- Calendar time unit size: 450
 - $n=250$ per experimental treatment arm
-- $N_p=1660$ for inverted-U time trend (corresponding to the middle of the trial) 
+- $N_p$ for inverted-U time trend placed to the middle of the trial
+- T1E and power with respect to the timing of adding the treatment arms under different time trend patterns
+
+
+```{r, fig.width=10, fig.height=6}
+ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5 & lambda0==0.5 & unit_size==450 & bs_degree==3)) +
+            annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
+            geom_line(aes(d2, reject_h0, color=model)) +
+            geom_point(aes(d2, reject_h0, color=model)) +
+            labs(x="d", y="Type I error rate", color="Analysis:") +
+            geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
+            facet_grid( ~ trend,
+                        labeller = labeller(trend  = as_labeller(trend_names))) +
+            #scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
+            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
+            #coord_cartesian(ylim = c(0, 0.05)) +
+            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            theme_bw(base_size = 13.8) +
+            theme(legend.text=element_text(size = 13)),
+          
+          ggplot(results_setting_1_splines_pow %>% filter(study_arm==5 & lambda0==0.5 & unit_size==450 & bs_degree==3)) +
+            geom_line(aes(d2, reject_h0, color=model)) +
+            geom_point(aes(d2, reject_h0, color=model)) +
+            labs(x="d", y="Power", color="Analysis:") +
+            facet_grid( ~ trend,
+                        labeller = labeller(trend  = as_labeller(trend_names))) +
+            #scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
+            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
+            coord_cartesian(ylim = c(0.70, 1)) +
+            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            theme_bw(base_size = 13.8) +
+            theme(legend.text=element_text(size = 13)),
+          
+          common.legend = T, legend = "bottom", ncol = 1) + 
+  bgcolor("white") + 
+  border("white")
+
+ggsave("figures/splines_alpha_pow_d_trend.png", width = 10, height = 6)
+ggsave("figures/splines_alpha_pow_d_trend.pdf", width = 10, height = 6)
+ggsave("figures/splines_alpha_pow_d_trend.tiff", width = 10, height = 6)
+```
+
+
+
+### Figure 7
+
+- Evaluated arm: 5
+- $d=500$
+- Degree of B-spline: 3 (cubic)
+- Calendar time unit size: 450
+- $n=250$ per experimental treatment arm
+- $N_p=2500$ for inverted-U time trend (corresponding to the middle of the trial) 
 - T1E and power with respect to the strength of the time trend $\lambda$ under different time trend patterns
 
 
 ```{r, fig.width=10, fig.height=6}
-ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5, bs_degree==3, unit_size==100)) +
+ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5 & d2==500 & unit_size==450 & bs_degree==3)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            geom_line(aes(lambda0, reject_h0, color=model)) +
+            geom_point(aes(lambda0, reject_h0, color=model)) +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis:") +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
-            #coord_cartesian(ylim = c(0, 0.1)) +
-            facet_grid(~ trend,
-                       labeller = labeller(trend = as_labeller(trend_names))) +
+            facet_grid( ~ trend,
+                        labeller = labeller(trend  = as_labeller(trend_names))) +
             scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
             scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
-          
-          ggplot(results_setting_1_splines_pow %>% filter(study_arm==5, bs_degree==3, unit_size==100)) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Power", color="Analysis approach:") +
+            coord_cartesian(ylim = c(0, 0.05)) +
             scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
-            coord_cartesian(ylim = c(0.70, 1)) +
-            facet_grid(~ trend,
-                       labeller = labeller(trend  = as_labeller(trend_names))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
             theme_bw(base_size = 13.8) +
             theme(legend.text=element_text(size = 13)),
           
-          common.legend = T, legend = "bottom",
-          nrow = 2) +
-  bgcolor("white") +
+          ggplot(results_setting_1_splines_pow %>% filter(study_arm==5 & d2==500 & unit_size==450 & bs_degree==3)) +
+            geom_line(aes(lambda0, reject_h0, color=model)) +
+            geom_point(aes(lambda0, reject_h0, color=model)) +
+            labs(x=TeX("$\\lambda$"), y="Power", color="Analysis:") +
+            facet_grid( ~ trend,
+                        labeller = labeller(trend  = as_labeller(trend_names))) +
+            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
+            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
+            coord_cartesian(ylim = c(0.70, 1)) +
+            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            theme_bw(base_size = 13.8) +
+            theme(legend.text=element_text(size = 13)),
+          
+          common.legend = T, legend = "bottom", ncol = 1) + 
+  bgcolor("white") + 
   border("white")
 
 ggsave("figures/splines_alpha_pow_lambda_trend.png", width = 10, height = 6)
 ggsave("figures/splines_alpha_pow_lambda_trend.pdf", width = 10, height = 6)
+ggsave("figures/splines_alpha_pow_lambda_trend.tiff", width = 10, height = 6)
 ```
+
+
 
 ## Plots from the Supplementary Material
 
@@ -307,8 +367,8 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(d2==400)) +
 
 ggsave("figures/fixmodel_alpha_pow_lambda_all_arms.png", width = 10, height = 15)
 ggsave("figures/fixmodel_alpha_pow_lambda_all_arms.pdf", width = 10, height = 15)
+ggsave("figures/fixmodel_alpha_pow_lambda_all_arms.tiff", width = 10, height = 15)
 ```
-
 
 ### Figure S2
 
@@ -316,6 +376,7 @@ ggsave("figures/fixmodel_alpha_pow_lambda_all_arms.pdf", width = 10, height = 15
 - $n=250$ per experimental treatment arm
 - Rows - Evaluated arm
 - T1E and power with respect to the timing of adding the treatment arms
+
 
 ```{r, fig.width=10, fig.height=15}
 ggarrange(ggplot(results_setting_1_alpha %>% filter(lambda0==0.5)) +
@@ -350,8 +411,8 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(lambda0==0.5)) +
 
 ggsave("figures/fixmodel_alpha_pow_d_all_arms.png", width = 10, height = 15)
 ggsave("figures/fixmodel_alpha_pow_d_all_arms.pdf", width = 10, height = 15)
+ggsave("figures/fixmodel_alpha_pow_d_all_arms.tiff", width = 10, height = 15)
 ```
-
 
 ### Figure S3
 
@@ -359,6 +420,7 @@ ggsave("figures/fixmodel_alpha_pow_d_all_arms.pdf", width = 10, height = 15)
 - $d=200$
 - $n=250$ per experimental treatment arm
 - T1E and power with respect to the index of the evaluated arm
+
 
 ```{r, fig.width=10, fig.height=5}
 ggarrange(ggplot(results_setting_1_alpha %>% filter(d2==200 & lambda0==0.5)) +
@@ -395,46 +457,148 @@ ggarrange(ggplot(results_setting_1_alpha %>% filter(d2==200 & lambda0==0.5)) +
 
 ggsave("figures/fixmodel_alpha_pow_study_arm.png", width = 10, height = 5)
 ggsave("figures/fixmodel_alpha_pow_study_arm.pdf", width = 10, height = 5)
+ggsave("figures/fixmodel_alpha_pow_study_arm.tiff", width = 10, height = 5)
 ```
-
 
 ### Figure S4
 
 - Evaluated arm: 5
-- Calendar time unit size: 100
+- $\lambda=0.5$
+- Calendar time unit size: 450
 - $n=250$ per experimental treatment arm
-- $N_p=1660$ for inverted-U time trend (corresponding to the middle of the trial) 
+- $N_p$ for inverted-U time trend placed to the middle of the trial
 - Rows - Degrees of B-splines
 - T1E and power with respect to the strength of the time trend $\lambda$ under different time trend patterns
 
 
 ```{r, fig.width=10, fig.height=12}
-ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5, unit_size==100)) +
+ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5 & lambda0==0.5 & unit_size==450)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            geom_line(aes(d2, reject_h0, color=model)) +
+            geom_point(aes(d2, reject_h0, color=model)) +
+            labs(x="d", y="Type I error rate", color="Analysis:") +
             geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
-            #coord_cartesian(ylim = c(0, 0.1)) +
             facet_grid(bs_degree ~ trend,
-                       labeller = labeller(trend = as_labeller(trend_names),
+                       labeller = labeller(trend  = as_labeller(trend_names),
                                            bs_degree = as_labeller(degree_names))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
+            #scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
             scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
+            coord_cartesian(ylim = c(0, 0.05)) +
+            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
             theme_bw(base_size = 13.8) +
             theme(legend.text=element_text(size = 13)),
           
-          ggplot(results_setting_1_splines_pow %>% filter(study_arm==5, unit_size==100)) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Power", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+          ggplot(results_setting_1_splines_pow %>% filter(study_arm==5 & lambda0==0.5 & unit_size==450)) +
+            geom_line(aes(d2, reject_h0, color=model)) +
+            geom_point(aes(d2, reject_h0, color=model)) +
+            labs(x="d", y="Power", color="Analysis:") +
+            facet_grid(bs_degree ~ trend,
+                       labeller = labeller(trend  = as_labeller(trend_names),
+                                           bs_degree = as_labeller(degree_names))) +
+            #scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
+            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
             coord_cartesian(ylim = c(0.70, 1)) +
+            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            theme_bw(base_size = 13.8) +
+            theme(legend.text=element_text(size = 13)),
+          
+          common.legend = T, legend = "bottom", ncol = 1) + 
+  bgcolor("white") + 
+  border("white")
+
+ggsave("figures/splines_alpha_pow_d_trend_all_degrees.png", width = 10, height = 12)
+ggsave("figures/splines_alpha_pow_d_trend_all_degrees.pdf", width = 10, height = 12)
+ggsave("figures/splines_alpha_pow_d_trend_all_degrees.tiff", width = 10, height = 12)
+```
+
+
+### Figure S5
+
+- Evaluated arm: 5
+- $d=500$
+- Calendar time unit size: 450
+- $n=250$ per experimental treatment arm
+- $N_p=2500$ for inverted-U time trend (corresponding to the middle of the trial)
+- Rows - Degrees of B-splines
+- T1E and power with respect to the strength of the time trend $\lambda$ under different time trend patterns
+
+
+```{r, fig.width=10, fig.height=12}
+ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5 & d2==500 & unit_size==450)) +
+            annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
+            geom_line(aes(lambda0, reject_h0, color=model)) +
+            geom_point(aes(lambda0, reject_h0, color=model)) +
+            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis:") +
+            geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
             facet_grid(bs_degree ~ trend,
                        labeller = labeller(trend  = as_labeller(trend_names),
                                            bs_degree = as_labeller(degree_names))) +
             scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
+            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
+            coord_cartesian(ylim = c(0, 0.05)) +
+            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            theme_bw(base_size = 13.8) +
+            theme(legend.text=element_text(size = 13)),
+          
+          ggplot(results_setting_1_splines_pow %>% filter(study_arm==5 & d2==500 & unit_size==450)) +
+            geom_line(aes(lambda0, reject_h0, color=model)) +
+            geom_point(aes(lambda0, reject_h0, color=model)) +
+            labs(x=TeX("$\\lambda$"), y="Power", color="Analysis:") +
+            facet_grid(bs_degree ~ trend,
+                       labeller = labeller(trend  = as_labeller(trend_names),
+                                           bs_degree = as_labeller(degree_names))) +
+            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
+            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
+            coord_cartesian(ylim = c(0.70, 1)) +
+            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            theme_bw(base_size = 13.8) +
+            theme(legend.text=element_text(size = 13)),
+          
+          common.legend = T, legend = "bottom", ncol = 1) + 
+  bgcolor("white") + 
+  border("white")
+
+ggsave("figures/splines_alpha_pow_lambda_trend_all_degrees.png", width = 10, height = 12)
+ggsave("figures/splines_alpha_pow_lambda_trend_all_degrees.pdf", width = 10, height = 12)
+ggsave("figures/splines_alpha_pow_lambda_trend_all_degrees.tiff", width = 10, height = 12)
+```
+
+### Figure S6
+
+- Degree of B-spline: 3 (cubic)
+- Calendar time unit size: 450
+- $\lambda = 0.5$
+- $n=250$ per experimental treatment arm
+- $N_p$ for inverted-U time trend placed to the middle of the trial
+- Rows - Evaluated arm
+- T1E and power with respect to the strength of the time trend $\lambda$ under different time trend patterns
+
+
+```{r, fig.width=10, fig.height=15}
+ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(bs_degree==3, lambda0==0.5, unit_size==450)) +
+            annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
+            geom_line(aes(d2, reject_h0, color = as.factor(model))) +
+            geom_point(aes(d2, reject_h0, color = as.factor(model))) +
+            labs(x="d", y="Type I error rate", color="Analysis approach:") +
+            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
+            #coord_cartesian(ylim = c(0, 0.1)) +
+            facet_grid(study_arm ~ trend,
+                       labeller = labeller(trend = as_labeller(trend_names))) +
+            #scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
+            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
+            theme_bw(base_size = 13.8) +
+            theme(legend.text=element_text(size = 13)),
+          
+          ggplot(results_setting_1_splines_pow %>% filter(bs_degree==3, lambda0==0.5, unit_size==450)) +
+            geom_line(aes(d2, reject_h0, color = as.factor(model))) +
+            geom_point(aes(d2, reject_h0, color = as.factor(model))) +
+            labs(x="d", y="Power", color="Analysis approach:") +
+            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
+            coord_cartesian(ylim = c(0.70, 1)) +
+            facet_grid(study_arm ~ trend,
+                       labeller = labeller(trend  = as_labeller(trend_names))) +
+            #scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
             scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
             theme_bw(base_size = 13.8) +
             theme(legend.text=element_text(size = 13)),
@@ -444,24 +608,26 @@ ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5, unit_s
   bgcolor("white") +
   border("white")
 
-ggsave("figures/splines_alpha_pow_lambda_trend_all_degrees.png", width = 10, height = 12)
-ggsave("figures/splines_alpha_pow_lambda_trend_all_degrees.pdf", width = 10, height = 12)
+ggsave("figures/splines_alpha_pow_d_trend_all_arms.png", width = 10, height = 15)
+ggsave("figures/splines_alpha_pow_d_trend_all_arms.pdf", width = 10, height = 15)
+ggsave("figures/splines_alpha_pow_d_trend_all_arms.tiff", width = 10, height = 15)
 ```
 
 
 
-### Figure S5
+### Figure S7
 
 - Degree of B-spline: 3 (cubic)
-- Calendar time unit size: 100
+- Calendar time unit size: 450
+- $d=500$
 - $n=250$ per experimental treatment arm
-- $N_p=1660$ for inverted-U time trend (corresponding to the middle of the trial) 
+- $N_p=2500$ for inverted-U time trend (corresponding to the middle of the trial)
 - Rows - Evaluated arm
 - T1E and power with respect to the strength of the time trend $\lambda$ under different time trend patterns
 
 
 ```{r, fig.width=10, fig.height=15}
-ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(bs_degree==3, unit_size==100)) +
+ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(bs_degree==3, d2==500, unit_size==450)) +
             annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
@@ -476,7 +642,7 @@ ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(bs_degree==3, unit_s
             theme_bw(base_size = 13.8) +
             theme(legend.text=element_text(size = 13)),
           
-          ggplot(results_setting_1_splines_pow %>% filter(bs_degree==3, unit_size==100)) +
+          ggplot(results_setting_1_splines_pow %>% filter(bs_degree==3, d2==500, unit_size==450)) +
             geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
             geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
             labs(x=TeX("$\\lambda$"), y="Power", color="Analysis approach:") +
@@ -496,6 +662,7 @@ ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(bs_degree==3, unit_s
 
 ggsave("figures/splines_alpha_pow_lambda_trend_all_arms.png", width = 10, height = 15)
 ggsave("figures/splines_alpha_pow_lambda_trend_all_arms.pdf", width = 10, height = 15)
+ggsave("figures/splines_alpha_pow_lambda_trend_all_arms.tiff", width = 10, height = 15)
 ```
 
 
@@ -507,7 +674,7 @@ ggsave("figures/splines_alpha_pow_lambda_trend_all_arms.pdf", width = 10, height
 
 ## Plots from Section 4
 
-### Figure 7
+### Figure 8
 
 - Evaluated arm: 3
 - $\lambda=0.125$
@@ -549,10 +716,11 @@ ggarrange(ggplot(results_setting_2_alpha %>% filter(study_arm==3, lambda1==0.125
 
 ggsave("figures/fixmodel_cal_alpha_pow_unit.png", width = 10, height = 6)
 ggsave("figures/fixmodel_cal_alpha_pow_unit.pdf", width = 10, height = 6)
+ggsave("figures/fixmodel_cal_alpha_pow_unit.tiff", width = 10, height = 6)
 ```
 
 
-### Figure 8
+### Figure 9
 
 - Evaluated arm: 3
 - Calendar time unit size: 100
@@ -596,10 +764,11 @@ ggarrange(ggplot(results_setting_2_alpha %>% filter(study_arm==3, unit_size==100
 
 ggsave("figures/fixmodel_cal_alpha_pow_lambda.png", width = 10, height = 6)
 ggsave("figures/fixmodel_cal_alpha_pow_lambda.pdf", width = 10, height = 6)
+ggsave("figures/fixmodel_cal_alpha_pow_lambda.tiff", width = 10, height = 6)
 ```
 
 
-### Figure 9
+### Figure 10
 
 - Evaluated arm: 3
 - Calendar time unit size: 100
@@ -647,6 +816,7 @@ ggarrange(ggplot(results_setting_2_mix_alpha %>% filter(study_arm==3, unit_size=
 
 ggsave("figures/mixmodel_alpha_pow_lambda.png", width = 10, height = 6)
 ggsave("figures/mixmodel_alpha_pow_lambda.pdf", width = 10, height = 6)
+ggsave("figures/mixmodel_alpha_pow_lambda.tiff", width = 10, height = 6)
 ```
 
 
@@ -657,7 +827,7 @@ ggsave("figures/mixmodel_alpha_pow_lambda.pdf", width = 10, height = 6)
 ## Plots from the Supplementary Material
 
 
-### Figure S6
+### Figure S8
 
 - $\lambda=0.125$
 - $n=250$ per experimental treatment arm
@@ -699,10 +869,11 @@ ggarrange(ggplot(results_setting_2_alpha %>% filter(lambda1==0.125)) +
 
 ggsave("figures/fixmodel_cal_alpha_pow_unit_all_arms.png", width = 10, height = 12)
 ggsave("figures/fixmodel_cal_alpha_pow_unit_all_arms.pdf", width = 10, height = 12)
+ggsave("figures/fixmodel_cal_alpha_pow_unit_all_arms.tiff", width = 10, height = 12)
 ```
 
 
-### Figure S7
+### Figure S9
 
 - Calendar time unit size: 100
 - $n=250$ per experimental treatment arm
@@ -746,10 +917,11 @@ ggarrange(ggplot(results_setting_2_alpha %>% filter(unit_size==100)) +
 
 ggsave("figures/fixmodel_cal_alpha_pow_lambda_all_arms.png", width = 10, height = 12)
 ggsave("figures/fixmodel_cal_alpha_pow_lambda_all_arms.pdf", width = 10, height = 12)
+ggsave("figures/fixmodel_cal_alpha_pow_lambda_all_arms.tiff", width = 10, height = 12)
 ```
 
 
-### Figure S8
+### Figure S10
 
 - Calendar time unit size: 100
 - $n=250$ per experimental treatment arm
@@ -797,6 +969,7 @@ ggarrange(ggplot(results_setting_2_mix_alpha %>% filter(unit_size==100)) +
 
 ggsave("figures/mixmodel_alpha_pow_lambda_all_arms.png", width = 10, height = 12)
 ggsave("figures/mixmodel_alpha_pow_lambda_all_arms.pdf", width = 10, height = 12)
+ggsave("figures/mixmodel_alpha_pow_lambda_all_arms.tiff", width = 10, height = 12)
 ```
 
 
@@ -807,7 +980,7 @@ ggsave("figures/mixmodel_alpha_pow_lambda_all_arms.pdf", width = 10, height = 12
 
 ## Plots from Section 4
 
-### Figure 10
+### Figure 11
 
 - Evaluated arm: 3
 - Calendar time unit size: 100
@@ -855,251 +1028,6 @@ ggarrange(ggplot(rbind(results_setting_3_alpha, results_setting_3_alpha_add) %>%
 
 ggsave("figures/mixint_alpha_pow_lambda.png", width = 10, height = 6)
 ggsave("figures/mixint_alpha_pow_lambda.pdf", width = 10, height = 6)
+ggsave("figures/mixint_alpha_pow_lambda.tiff", width = 10, height = 6)
 ```
 
-
-
-
-
-```{r}
-knit_exit()
-```
-
-
-# NOT INCLUDED
-
-
-- $\lambda=0.5$
-- $n=250$ per experimental treatment arm
-- Rows - $d$
-- T1E and power with respect to the index of the evaluated arm
-
-```{r, fig.width=10, fig.height=15}
-ggarrange(ggplot(results_setting_1_alpha %>% filter(d2 %in% c(0, 100, 200, 300, 400, 500) & lambda0==0.5)) +
-            annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
-            geom_line(aes(study_arm, reject_h0, color=model)) +
-            geom_point(aes(study_arm, reject_h0, color=model)) +
-            labs(x="Study arm", y="Type I error rate", color="Analysis approach:") +
-            geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
-            facet_grid(d2 ~ trend,
-                       labeller = labeller(trend  = as_labeller(trend_names))) +
-            #coord_cartesian(ylim = c(0, 0.3)) +
-            scale_color_manual(labels = c("Fixed - period", "Pooled analysis", "Separate analysis"), values = my_palette, limits = force) +
-            scale_x_continuous(breaks = c(1:10), labels = c(1:10)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
-          
-          ggplot(results_setting_1_pow %>% filter(d2 %in% c(0, 100, 200, 300, 400, 500) & lambda0==0.5)) +
-            geom_line(aes(study_arm, reject_h0, color=model)) +
-            geom_point(aes(study_arm, reject_h0, color=model)) +
-            labs(x="Study arm", y="Power", color="Analysis approach:") +
-            facet_grid(d2 ~ trend,
-                       labeller = labeller(trend  = as_labeller(trend_names))) +
-            coord_cartesian(ylim = c(0.70, 1)) +
-            scale_color_manual(labels = c("Fixed - period", "Pooled analysis", "Separate analysis"), values = my_palette, limits = force) +
-            scale_x_continuous(breaks = c(1:10), labels = c(1:10)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
-          
-          common.legend = T, legend = "bottom") + 
-  bgcolor("white") + 
-  border("white")
-
-ggsave("figures/fixmodel_alpha_pow_study_arm_all_d.png", width = 10, height = 15)
-ggsave("figures/fixmodel_alpha_pow_study_arm_all_d.pdf", width = 10, height = 15)
-```
-
-
-
-- Evaluated arm: 5
-- Degree of B-spline: 3 (cubic)
-- $n=250$ per experimental treatment arm
-- $N_p=1660$ for inverted-U time trend (corresponding to the middle of the trial) 
-- Rows - Calendar time unit sizes
-- T1E and power with respect to the strength of the time trend $\lambda$ under different time trend patterns
-
-
-```{r, fig.width=10, fig.height=12}
-ggarrange(ggplot(results_setting_1_splines_alpha %>% filter(study_arm==5, bs_degree==3)) +
-            annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
-            geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
-            #coord_cartesian(ylim = c(0, 0.1)) +
-            facet_grid(unit_size ~ trend,
-                       labeller = labeller(trend = as_labeller(trend_names))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
-          
-          ggplot(results_setting_1_splines_pow %>% filter(study_arm==5, bs_degree==3)) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Power", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Separate analysis", "Splines - period", "Splines - calendar"), values = my_palette, limits = force) +
-            coord_cartesian(ylim = c(0.70, 1)) +
-            facet_grid(unit_size ~ trend,
-                       labeller = labeller(trend  = as_labeller(trend_names))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
-          
-          common.legend = T, legend = "bottom",
-          nrow = 2) +
-  bgcolor("white") +
-  border("white")
-
-ggsave("figures/splines_alpha_pow_lambda_trend_all_units.png", width = 10, height = 12)
-ggsave("figures/splines_alpha_pow_lambda_trend_all_units.pdf", width = 10, height = 12)
-```
-
-
-- Evaluated arm: 3
-- $n=250$ per experimental treatment arm
-- $N_p=750$ for inverted-U time trend (corresponding approximately to the middle of the trial) 
-- Rows - Calendar time unit sizes 
-- T1E and power with respect to the strength of the time trend $\lambda$ under different time trend patterns
-
-```{r, fig.width=10, fig.height=15}
-ggarrange(ggplot(results_setting_2_alpha %>% filter(study_arm==3, unit_size %in% c(25, 50, 100, 200, 300))) +
-            annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Fixed - calendar", "Separate analysis"), values = my_palette, limits = force) +
-            geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
-            #coord_cartesian(ylim = c(0, 0.1)) +
-            facet_grid(unit_size ~ trend,
-                       labeller = labeller(trend  = as_labeller(trend_names))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
-          
-          ggplot(results_setting_2_pow %>% filter(study_arm==3, unit_size %in% c(25, 50, 100, 200, 300))) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Power", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Fixed - calendar", "Separate analysis"), values = my_palette, limits = force) +
-            coord_cartesian(ylim = c(0.70, 1)) +
-            facet_grid(unit_size ~ trend,
-                       labeller = labeller(trend  = as_labeller(trend_names))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
-          
-          common.legend = T, legend = "bottom",
-          nrow = 2) + 
-  bgcolor("white") + 
-  border("white")
-
-ggsave("figures/fixmodel_cal_alpha_pow_lambda_all_units.png", width = 10, height = 15)
-ggsave("figures/fixmodel_cal_alpha_pow_lambda_all_units.pdf", width = 10, height = 15)
-```
-
-
-
-- Evaluated arm: 3
-- $n=250$ per experimental treatment arm
-- $N_p=750$ for inverted-U time trend (corresponding approximately to the middle of the trial) 
-- Rows - Calendar time unit sizes
-- T1E and power with respect to the strength of the time trend $\lambda$ under different time trend patterns
-
-```{r, fig.width=10, fig.height=12}
-ggarrange(ggplot(results_setting_2_mix_alpha %>% filter(study_arm==3)) +
-            annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Type I error rate", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Mixed - period", "Mixed (AR1) - period", 
-                                          "Mixed (AR1) - calendar", "Mixed - calendar", "Separate analysis"),
-                               values = my_palette, limits = force) +
-            geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
-            #coord_cartesian(ylim = c(0, 0.1)) +
-            facet_grid(unit_size ~ trend,
-                       labeller = labeller(trend  = as_labeller(trend_names))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
-          
-          ggplot(results_setting_2_mix_pow %>% filter(study_arm==3)) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda$"), y="Power", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Mixed - period", "Mixed (AR1) - period", 
-                                          "Mixed (AR1) - calendar", "Mixed - calendar", "Separate analysis"),
-                               values = my_palette, limits = force) +
-            coord_cartesian(ylim = c(0.70, 1)) +
-            facet_grid(unit_size ~ trend,
-                       labeller = labeller(trend  = as_labeller(trend_names))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13)),
-          
-          common.legend = T, legend = "bottom",
-          nrow = 2) + 
-  bgcolor("white") + 
-  border("white")
-
-ggsave("figures/mixmodel_alpha_pow_lambda_all_units.png", width = 10, height = 12)
-ggsave("figures/mixmodel_alpha_pow_lambda_all_units.pdf", width = 10, height = 12)
-```
-
-
-
-
-- Evaluated arm: 3
-- $n=250$ per experimental treatment arm
-- Rows - Calendar time unit sizes
-- T1E and power with respect to the strength of the time trend $\lambda_1$ under different time trend cases
-
-```{r, fig.width=10, fig.height=12}
-ggarrange(ggplot(rbind(results_setting_3_alpha, results_setting_3_alpha_add) %>% filter(study_arm==3)) +
-            annotate("rect", xmin = -Inf, xmax = Inf, ymin = pred_int[1], ymax = pred_int[2], fill = "gray54", alpha = 0.4) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda_1$"), y="Type I error rate", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Mixed w. inter. - period", "Mixed w. inter. - calendar", "Separate analysis"),
-                               values = my_palette, limits = force) +
-            geom_hline(aes(yintercept = 0.025), linetype = "dotted") +
-            #coord_cartesian(ylim = c(0, 0.1)) +
-            facet_grid(unit_size ~ trend_case,
-                       labeller = labeller(trend_case = as_labeller(trend_case_names, label_parsed))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13),
-                  strip.text = element_text(size = 9.4)),
-          
-          ggplot(rbind(results_setting_3_pow, results_setting_3_pow_add) %>% filter(study_arm==3)) +
-            geom_line(aes(lambda1, reject_h0, color = as.factor(model))) +
-            geom_point(aes(lambda1, reject_h0, color = as.factor(model))) +
-            labs(x=TeX("$\\lambda_1$"), y="Power", color="Analysis approach:") +
-            scale_color_manual(labels = c("Fixed - period", "Mixed w. inter. - period", "Mixed w. inter. - calendar", "Separate analysis"),
-                               values = my_palette, limits = force) +
-            coord_cartesian(ylim = c(0.70, 1)) +
-            facet_grid(unit_size ~ trend_case,
-                       labeller = labeller(trend_case = as_labeller(trend_case_names, label_parsed))) +
-            scale_x_continuous(labels = function(x) sub(".0+$", "", x)) +
-            scale_y_continuous(labels = function(x) sub(".0+$", "", x)) +
-            theme_bw(base_size = 13.8) +
-            theme(legend.text=element_text(size = 13),
-                  strip.text = element_text(size = 9.4)),
-          
-          common.legend = T, legend = "bottom",
-          nrow = 2) + 
-  bgcolor("white") + 
-  border("white")
-
-ggsave("figures/mixint_alpha_pow_lambda_all_units.png", width = 10, height = 12)
-ggsave("figures/mixint_alpha_pow_lambda_all_units.pdf", width = 10, height = 12)
-```

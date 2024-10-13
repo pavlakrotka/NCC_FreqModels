@@ -1,0 +1,822 @@
+---
+title: "Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"
+subtitle: "Case study: FLAIR trial"
+author: "Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig"
+date: "2024"
+output: 
+  html_document:
+    toc: yes
+    toc_depth: 3
+    toc_float: true
+    number_sections: yes
+    code_folding: show 
+    theme: flatly
+---
+
+```{r setup, include = FALSE}
+library(knitr)
+opts_chunk$set(collapse = TRUE,
+               echo = TRUE,
+               comment = "#>",
+               warning = FALSE,
+               message = FALSE,
+               fig.align = "center",
+               out.width = "100%")
+```
+
+```{r, warning=FALSE, message=FALSE, include=FALSE}
+library(tidyverse)
+library(kableExtra)
+library(splines)
+library(lmerTest)
+library(spaMM)
+
+# devtools::install_github("pavlakrotka/NCC@v1.3", force = TRUE)
+library(NCC)
+```
+
+
+# Introduction
+
+This file contains all code to reproduce the case study based on the FLAIR trial presented in Section 5.2 of the paper *"Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"* by Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig. The results obtained from the analyses below are presented in Table 3, Table S1, and Figure S11.
+
+
+# Data simulation
+
+```{r}
+# Function to simulate data from the FLAIR trial
+
+sim_flair <- function(lambda, trend_pattern, theta = c(-log(0.44), -log(0.13))){
+  
+  # treatments: FCR-0, IR-1, IV-2
+  
+  period1 <- sample(c(rep(0, 316), rep(1, 317)))
+  period2 <- sample(c(rep(0, 69), rep(1, 69), rep(2, 69)))
+  period3 <- sample(c(rep(0, 194), rep(2, 191)))
+  
+  trt <- c(period1, period2, period3)
+  
+  per <- c(rep(1, length(period1)), rep(2, length(period2)), rep(3, length(period3)))
+  
+  per_trend <- c(rep(1, length(period1)), rep(2, length(period2)+length(period3)))
+  
+  j0 <- which(trt==0)
+  j1 <- which(trt==1)
+  j2 <- which(trt==2)
+  
+  if (trend_pattern=="linear") {
+    trend <- linear_trend(1:length(trt), lambda = lambda, sample_size = c(1, length(trt)))
+  }
+  
+  if (trend_pattern=="stepwise") {
+    trend <- sw_trend(cj = per_trend, lambda = lambda)
+  }
+  
+  
+  means <- c()
+  
+  means[j0] <- 0
+  means[j1] <- theta[1]
+  means[j2] <- theta[2]
+  
+  response <- rnorm(length(trt), means, 1)
+  
+  # Add time trend
+  
+  response[j0] <- response[j0] + trend[j0]
+  response[j1] <- response[j1] + trend[j1]
+  response[j2] <- response[j2] + trend[j2]
+  
+  unit_size <- 100
+  
+  flair_data <- data.frame(j = 1:length(trt),
+                           treatment = trt,
+                           period = per,
+                           response = response,
+                           cal_time = rep(c(1:ceiling((length(trt)/unit_size))), each = unit_size)[1:length(trt)])
+  
+  flair_data
+}
+```
+
+```{r}
+# Simulation of 4 settings with different time trends patterns and strengths (using same simulation runs to distinguish changes due to the added time trend)
+
+set.seed(132)
+flair_data_lin_0.25 <- sim_flair(lambda = 0.25, trend_pattern = "linear")
+
+set.seed(132)
+flair_data_lin_1.5 <- sim_flair(lambda = 1.5, trend_pattern = "linear")
+
+set.seed(132)
+flair_data_lin_5 <- sim_flair(lambda = 5, trend_pattern = "linear")
+
+set.seed(132)
+flair_data_step_0.25 <- sim_flair(lambda = 0.25, trend_pattern = "stepwise")
+
+set.seed(132)
+flair_data_step_1.5 <- sim_flair(lambda = 1.5, trend_pattern = "stepwise")
+
+set.seed(132)
+flair_data_step_5 <- sim_flair(lambda = 5, trend_pattern = "stepwise")
+```
+
+
+## Sample sizes per treatment and period
+
+```{r}
+table(flair_data_lin_0.25$treatment, flair_data_lin_0.25$period)
+```
+
+```{r}
+rowSums(table(flair_data_lin_0.25$treatment, flair_data_lin_0.25$period))
+```
+
+
+## Total sample size
+
+```{r}
+nrow(flair_data_lin_0.25)
+```
+
+
+
+# Considered approaches
+
+## Regression model - period adjustment
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+mod_lm_per <- lm(response ~ as.factor(treatment) + as.factor(period), flair_data_lin_0.25)
+summary(mod_lm_per)
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+mod_lm_per <- lm(response ~ as.factor(treatment) + as.factor(period), flair_data_lin_1.5)
+summary(mod_lm_per)
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+mod_lm_per <- lm(response ~ as.factor(treatment) + as.factor(period), flair_data_lin_5)
+summary(mod_lm_per)
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+mod_lm_per <- lm(response ~ as.factor(treatment) + as.factor(period), flair_data_step_0.25)
+summary(mod_lm_per)
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+mod_lm_per <- lm(response ~ as.factor(treatment) + as.factor(period), flair_data_step_1.5)
+summary(mod_lm_per)
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+mod_lm_per <- lm(response ~ as.factor(treatment) + as.factor(period), flair_data_step_5)
+summary(mod_lm_per)
+```
+
+
+## Regression model - calendar time adjustment
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+mod_lm_cal <- lm(response ~ as.factor(treatment) + as.factor(cal_time), flair_data_lin_0.25)
+summary(mod_lm_cal)
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+mod_lm_cal <- lm(response ~ as.factor(treatment) + as.factor(cal_time), flair_data_lin_1.5)
+summary(mod_lm_cal)
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+mod_lm_cal <- lm(response ~ as.factor(treatment) + as.factor(cal_time), flair_data_lin_5)
+summary(mod_lm_cal)
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+mod_lm_cal <- lm(response ~ as.factor(treatment) + as.factor(cal_time), flair_data_step_0.25)
+summary(mod_lm_cal)
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+mod_lm_cal <- lm(response ~ as.factor(treatment) + as.factor(cal_time), flair_data_step_1.5)
+summary(mod_lm_cal)
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+mod_lm_cal <- lm(response ~ as.factor(treatment) + as.factor(cal_time), flair_data_step_5)
+summary(mod_lm_cal)
+```
+
+
+## Mixed model - period adjustment
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+mod_mix_per <- lmer(response ~ as.factor(treatment) + (1 | period), flair_data_lin_0.25)
+summary(mod_mix_per)
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+mod_mix_per <- lmer(response ~ as.factor(treatment) + (1 | period), flair_data_lin_1.5)
+summary(mod_mix_per)
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+mod_mix_per <- lmer(response ~ as.factor(treatment) + (1 | period), flair_data_lin_5)
+summary(mod_mix_per)
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+mod_mix_per <- lmer(response ~ as.factor(treatment) + (1 | period), flair_data_step_0.25)
+summary(mod_mix_per)
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+mod_mix_per <- lmer(response ~ as.factor(treatment) + (1 | period), flair_data_step_1.5)
+summary(mod_mix_per)
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+mod_mix_per <- lmer(response ~ as.factor(treatment) + (1 | period), flair_data_step_5)
+summary(mod_mix_per)
+```
+
+## Mixed model - calendar time adjustment
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+mod_mix_cal <- lmer(response ~ as.factor(treatment) + (1 | cal_time), flair_data_lin_0.25)
+summary(mod_mix_cal)
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+mod_mix_cal <- lmer(response ~ as.factor(treatment) + (1 | cal_time), flair_data_lin_1.5)
+summary(mod_mix_cal)
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+mod_mix_cal <- lmer(response ~ as.factor(treatment) + (1 | cal_time), flair_data_lin_5)
+summary(mod_mix_cal)
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+mod_mix_cal <- lmer(response ~ as.factor(treatment) + (1 | cal_time), flair_data_step_0.25)
+summary(mod_mix_cal)
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+mod_mix_cal <- lmer(response ~ as.factor(treatment) + (1 | cal_time), flair_data_step_1.5)
+summary(mod_mix_cal)
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+mod_mix_cal <- lmer(response ~ as.factor(treatment) + (1 | cal_time), flair_data_step_5)
+summary(mod_mix_cal)
+```
+
+## Mixed model (AR1) - period adjustment
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+mod_mix_ar1_per <- fitme(response ~ as.factor(treatment) + AR1(1 | period), flair_data_lin_0.25)
+
+summary.HLfit(mod_mix_ar1_per)
+res <- summary.HLfit(mod_mix_ar1_per, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_per, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+mod_mix_ar1_per <- fitme(response ~ as.factor(treatment) + AR1(1 | period), flair_data_lin_1.5)
+
+summary.HLfit(mod_mix_ar1_per)
+res <- summary.HLfit(mod_mix_ar1_per, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_per, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+mod_mix_ar1_per <- fitme(response ~ as.factor(treatment) + AR1(1 | period), flair_data_lin_5)
+
+summary.HLfit(mod_mix_ar1_per)
+res <- summary.HLfit(mod_mix_ar1_per, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_per, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+mod_mix_ar1_per <- fitme(response ~ as.factor(treatment) + AR1(1 | period), flair_data_step_0.25)
+
+summary.HLfit(mod_mix_ar1_per)
+res <- summary.HLfit(mod_mix_ar1_per, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_per, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+mod_mix_ar1_per <- fitme(response ~ as.factor(treatment) + AR1(1 | period), flair_data_step_1.5)
+
+summary.HLfit(mod_mix_ar1_per)
+res <- summary.HLfit(mod_mix_ar1_per, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_per, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+mod_mix_ar1_per <- fitme(response ~ as.factor(treatment) + AR1(1 | period), flair_data_step_5)
+
+summary.HLfit(mod_mix_ar1_per)
+res <- summary.HLfit(mod_mix_ar1_per, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_per, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+
+## Mixed model (AR1) - calendar time adjustment
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+mod_mix_ar1_cal <- fitme(response ~ as.factor(treatment) + AR1(1 | cal_time), flair_data_lin_0.25)
+
+summary.HLfit(mod_mix_ar1_cal)
+res <- summary.HLfit(mod_mix_ar1_cal, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_cal, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+mod_mix_ar1_cal <- fitme(response ~ as.factor(treatment) + AR1(1 | cal_time), flair_data_lin_1.5)
+
+summary.HLfit(mod_mix_ar1_cal)
+res <- summary.HLfit(mod_mix_ar1_cal, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_cal, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+mod_mix_ar1_cal <- fitme(response ~ as.factor(treatment) + AR1(1 | cal_time), flair_data_lin_5)
+
+summary.HLfit(mod_mix_ar1_cal)
+res <- summary.HLfit(mod_mix_ar1_cal, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_cal, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+mod_mix_ar1_cal <- fitme(response ~ as.factor(treatment) + AR1(1 | cal_time), flair_data_step_0.25)
+
+summary.HLfit(mod_mix_ar1_cal)
+res <- summary.HLfit(mod_mix_ar1_cal, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_cal, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+mod_mix_ar1_cal <- fitme(response ~ as.factor(treatment) + AR1(1 | cal_time), flair_data_step_1.5)
+
+summary.HLfit(mod_mix_ar1_cal)
+res <- summary.HLfit(mod_mix_ar1_cal, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_cal, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+mod_mix_ar1_cal <- fitme(response ~ as.factor(treatment) + AR1(1 | cal_time), flair_data_step_5)
+
+summary.HLfit(mod_mix_ar1_cal)
+res <- summary.HLfit(mod_mix_ar1_cal, verbose = FALSE)
+
+IC <- get_any_IC(mod_mix_ar1_cal, verbose = FALSE)
+IC
+eff_df <- IC["       effective df:"] # effective degrees of freedom
+
+2*(1-pt(abs(res$beta_table["as.factor(treatment)2", "t-value"]), eff_df)) # p-value
+```
+
+
+
+## Splines with knotes according to periods
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+period_start <- c(max(which(flair_data_lin_0.25$period==1)), max(which(flair_data_lin_0.25$period==2)))
+
+mod_splines_per <- lm(response ~ as.factor(treatment) + bs(j, knots = period_start, degree = 3), flair_data_lin_0.25)
+summary(mod_splines_per)
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+period_start <- c(max(which(flair_data_lin_1.5$period==1)), max(which(flair_data_lin_1.5$period==2)))
+
+mod_splines_per <- lm(response ~ as.factor(treatment) + bs(j, knots = period_start, degree = 3), flair_data_lin_1.5)
+summary(mod_splines_per)
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+period_start <- c(max(which(flair_data_lin_5$period==1)), max(which(flair_data_lin_5$period==2)))
+
+mod_splines_per <- lm(response ~ as.factor(treatment) + bs(j, knots = period_start, degree = 3), flair_data_lin_5)
+summary(mod_splines_per)
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+period_start <- c(max(which(flair_data_step_0.25$period==1)), max(which(flair_data_step_0.25$period==2)))
+
+mod_splines_per <- lm(response ~ as.factor(treatment) + bs(j, knots = period_start, degree = 3), flair_data_step_0.25)
+summary(mod_splines_per)
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+period_start <- c(max(which(flair_data_step_1.5$period==1)), max(which(flair_data_step_1.5$period==2)))
+
+mod_splines_per <- lm(response ~ as.factor(treatment) + bs(j, knots = period_start, degree = 3), flair_data_step_1.5)
+summary(mod_splines_per)
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+period_start <- c(max(which(flair_data_step_5$period==1)), max(which(flair_data_step_5$period==2)))
+
+mod_splines_per <- lm(response ~ as.factor(treatment) + bs(j, knots = period_start, degree = 3), flair_data_step_5)
+summary(mod_splines_per)
+```
+
+
+## Splines with knotes according to calendar time
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+cal_time_start <- c()
+for (i in unique(flair_data_lin_0.25$cal_time)) {
+  cal_time_start <- c(cal_time_start, max(flair_data_lin_0.25[flair_data_lin_0.25$cal_time==i,]$j))
+}
+
+mod_splines_cal <- lm(response ~ as.factor(treatment) + bs(j, knots = cal_time_start[1:length(cal_time_start)-1], degree = 3), flair_data_lin_0.25)
+summary(mod_splines_cal)
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+cal_time_start <- c()
+for (i in unique(flair_data_lin_1.5$cal_time)) {
+  cal_time_start <- c(cal_time_start, max(flair_data_lin_1.5[flair_data_lin_1.5$cal_time==i,]$j))
+}
+
+mod_splines_cal <- lm(response ~ as.factor(treatment) + bs(j, knots = cal_time_start[1:length(cal_time_start)-1], degree = 3), flair_data_lin_1.5)
+summary(mod_splines_cal)
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+cal_time_start <- c()
+for (i in unique(flair_data_lin_5$cal_time)) {
+  cal_time_start <- c(cal_time_start, max(flair_data_lin_5[flair_data_lin_5$cal_time==i,]$j))
+}
+
+mod_splines_cal <- lm(response ~ as.factor(treatment) + bs(j, knots = cal_time_start[1:length(cal_time_start)-1], degree = 3), flair_data_lin_5)
+summary(mod_splines_cal)
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+cal_time_start <- c()
+for (i in unique(flair_data_step_0.25$cal_time)) {
+  cal_time_start <- c(cal_time_start, max(flair_data_step_0.25[flair_data_step_0.25$cal_time==i,]$j))
+}
+
+mod_splines_cal <- lm(response ~ as.factor(treatment) + bs(j, knots = cal_time_start[1:length(cal_time_start)-1], degree = 3), flair_data_step_0.25)
+summary(mod_splines_cal)
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+cal_time_start <- c()
+for (i in unique(flair_data_step_1.5$cal_time)) {
+  cal_time_start <- c(cal_time_start, max(flair_data_step_1.5[flair_data_step_1.5$cal_time==i,]$j))
+}
+
+mod_splines_cal <- lm(response ~ as.factor(treatment) + bs(j, knots = cal_time_start[1:length(cal_time_start)-1], degree = 3), flair_data_step_1.5)
+summary(mod_splines_cal)
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+cal_time_start <- c()
+for (i in unique(flair_data_step_5$cal_time)) {
+  cal_time_start <- c(cal_time_start, max(flair_data_step_5[flair_data_step_5$cal_time==i,]$j))
+}
+
+mod_splines_cal <- lm(response ~ as.factor(treatment) + bs(j, knots = cal_time_start[1:length(cal_time_start)-1], degree = 3), flair_data_step_5)
+summary(mod_splines_cal)
+```
+
+
+## Pooled analysis
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+mod_pool <- lm(response ~ as.factor(treatment), flair_data_lin_0.25 %>% filter(treatment %in% c(0, 2)))
+summary(mod_pool)
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+mod_pool <- lm(response ~ as.factor(treatment), flair_data_lin_1.5 %>% filter(treatment %in% c(0, 2)))
+summary(mod_pool)
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+mod_pool <- lm(response ~ as.factor(treatment), flair_data_lin_5 %>% filter(treatment %in% c(0, 2)))
+summary(mod_pool)
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+mod_pool <- lm(response ~ as.factor(treatment), flair_data_step_0.25 %>% filter(treatment %in% c(0, 2)))
+summary(mod_pool)
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+mod_pool <- lm(response ~ as.factor(treatment), flair_data_step_1.5 %>% filter(treatment %in% c(0, 2)))
+summary(mod_pool)
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+mod_pool <- lm(response ~ as.factor(treatment), flair_data_step_5 %>% filter(treatment %in% c(0, 2)))
+summary(mod_pool)
+```
+
+
+## Separate analysis
+
+### Linear trend, $\lambda=0.25$
+
+```{r}
+mod_sep <- lm(response ~ as.factor(treatment), flair_data_lin_0.25 %>% filter(treatment %in% c(0, 2), period %in% c(2, 3)))
+summary(mod_sep)
+```
+
+### Linear trend, $\lambda=1.5$
+
+```{r}
+mod_sep <- lm(response ~ as.factor(treatment), flair_data_lin_1.5 %>% filter(treatment %in% c(0, 2), period %in% c(2, 3)))
+summary(mod_sep)
+```
+
+### Linear trend, $\lambda=5$
+
+```{r}
+mod_sep <- lm(response ~ as.factor(treatment), flair_data_lin_5 %>% filter(treatment %in% c(0, 2), period %in% c(2, 3)))
+summary(mod_sep)
+```
+
+### Stepwise trend, $\lambda=0.25$
+
+```{r}
+mod_sep <- lm(response ~ as.factor(treatment), flair_data_step_0.25 %>% filter(treatment %in% c(0, 2), period %in% c(2, 3)))
+summary(mod_sep)
+```
+
+### Stepwise trend, $\lambda=1.5$
+
+```{r}
+mod_sep <- lm(response ~ as.factor(treatment), flair_data_step_1.5 %>% filter(treatment %in% c(0, 2), period %in% c(2, 3)))
+summary(mod_sep)
+```
+
+### Stepwise trend, $\lambda=5$
+
+```{r}
+mod_sep <- lm(response ~ as.factor(treatment), flair_data_step_5 %>% filter(treatment %in% c(0, 2), period %in% c(2, 3)))
+summary(mod_sep)
+```
+
+
+
+
+
+
+
+# Bias simulations
+
+```{r}
+n_sim <- 10000    
+set.seed(123)
+
+res_fix_step_0.25 <- c()
+for (i in 1:n_sim) {
+  res_fix_step_0.25 <- c(res_fix_step_0.25, fixmodel_cont(sim_flair(lambda = 0.25, trend_pattern = "stepwise"), 2)$treat_effect - (-log(0.13)))
+  if (i %in% seq(1000, 10000, by=1000)) { # keep track of the progress
+    print(i) 
+  }
+}
+
+t.test(res_fix_step_0.25)
+
+
+
+res_splines_step_0.25 <- c()
+for (i in 1:n_sim) {
+  res_splines_step_0.25 <- c(res_splines_step_0.25, splines_cont(sim_flair(lambda = 0.25, trend_pattern = "stepwise"), 2)$treat_effect - (-log(0.13)))
+  if (i %in% seq(1000, 10000, by=1000)) { # keep track of the progress
+    print(i) 
+  }
+}
+
+t.test(res_splines_step_0.25)
+
+
+
+res_mix_step_0.25 <- c()
+for (i in 1:n_sim) {
+  res_mix_step_0.25 <- c(res_mix_step_0.25, mixmodel_cont(sim_flair(lambda = 0.25, trend_pattern = "stepwise"), 2)$treat_effect - (-log(0.13)))
+  if (i %in% seq(1000, 10000, by=1000)) { # keep track of the progress
+    print(i) 
+  }
+}
+
+t.test(res_mix_step_0.25)
+
+
+
+res_mix_ar1_step_0.25 <- c()
+for (i in 1:n_sim) {
+  res_mix_ar1_step_0.25 <- c(res_mix_ar1_step_0.25, mixmodel_AR1_cont(sim_flair(lambda = 0.25, trend_pattern = "stepwise"), 2)$treat_effect - (-log(0.13)))
+  if (i %in% seq(1000, 10000, by=1000)) { # keep track of the progress
+    print(i) 
+  }
+}
+
+t.test(res_mix_ar1_step_0.25)
+```
+
+
+## Figure S11
+
+```{r, fig.height=6, fig.width=7}
+bias_res <- data.frame(model = c(rep("Fixed effect model", n_sim),
+                                 rep("Spline regression", n_sim),
+                                 rep("Mixed model", n_sim),
+                                 rep("Mixed model (AR1)", n_sim)),
+                       bias = c(res_fix_step_0.25,
+                                res_splines_step_0.25,
+                                res_mix_step_0.25,
+                                res_mix_ar1_step_0.25))
+  
+  
+ggplot(bias_res) +
+  geom_histogram(aes(bias), color="darkred", fill="darkred", alpha=0.6, bins = 40) +
+  facet_wrap(~ model, nrow=2) +
+  labs(x = "Estimation error", y = "Count") +
+  geom_vline(xintercept = 0, color = "black") +
+  theme_bw(base_size = 13.8)
+
+ggsave("figures/FLAIR_bias.png", width = 7, height = 6)
+ggsave("figures/FLAIR_bias.pdf", width = 7, height = 6)
+ggsave("figures/FLAIR_bias.tiff", width = 7, height = 6)
+```
+
+
+
+
+
+
+
