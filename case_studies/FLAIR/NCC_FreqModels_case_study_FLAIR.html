@@ -1599,12 +1599,12 @@ Höglinger, Marta Bofill Roig</h4>
 <div id="introduction" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> Introduction</h1>
 <p>This file contains all code to reproduce the case study based on the
-FLAIR trial presented in Section 5.2 of the paper <em>“Statistical
-modeling to adjust for time trends in adaptive platform trials utilizing
-non-concurrent controls”</em> by Pavla Krotka, Martin Posch, Mohamed
-Gewily, Günter Höglinger, Marta Bofill Roig. The results obtained from
-the analyses below are presented in Table 3, Table S1, and Figure
-S11.</p>
+FLAIR trial presented in Supplementary material (Section D) of the paper
+<em>“Statistical modeling to adjust for time trends in adaptive platform
+trials utilizing non-concurrent controls”</em> by Pavla Krotka, Martin
+Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig. The results
+obtained from the analyses below are presented in Table S1 and Figure
+S12.</p>
 </div>
 <div id="data-simulation" class="section level1" number="2">
 <h1><span class="header-section-number">2</span> Data simulation</h1>
@@ -1661,7 +1661,7 @@ sim_flair &lt;- function(lambda, trend_pattern, theta = c(-log(0.44), -log(0.13)
   
   flair_data
 }</code></pre>
-<pre class="r"><code># Simulation of 4 settings with different time trends patterns and strengths (using same simulation runs to distinguish changes due to the added time trend)
+<pre class="r"><code># Simulation of 6 settings with different time trends patterns and strengths (using same simulation runs to distinguish changes due to the added time trend)
 
 set.seed(132)
 flair_data_lin_0.25 &lt;- sim_flair(lambda = 0.25, trend_pattern = &quot;linear&quot;)
@@ -2545,7 +2545,7 @@ summary.HLfit(mod_mix_ar1_per)
 #&gt; Family: gaussian( link = identity ) 
 #&gt;                    --- Correlation parameters:
 #&gt;    1.ARphi 
-#&gt; -0.1826208 
+#&gt; -0.1826209 
 #&gt;            --- Variance parameters (&#39;lambda&#39;):
 #&gt; lambda = var(u) for u ~ Gaussian; 
 #&gt;    period  :  0.006827  
@@ -2587,7 +2587,7 @@ summary.HLfit(mod_mix_ar1_per)
 #&gt; Family: gaussian( link = identity ) 
 #&gt;                    --- Correlation parameters:
 #&gt;      1.ARphi 
-#&gt; -0.002662654 
+#&gt; -0.002661492 
 #&gt;            --- Variance parameters (&#39;lambda&#39;):
 #&gt; lambda = var(u) for u ~ Gaussian; 
 #&gt;    period  :  0.1535  
@@ -2629,7 +2629,7 @@ summary.HLfit(mod_mix_ar1_per)
 #&gt; Family: gaussian( link = identity ) 
 #&gt;                    --- Correlation parameters:
 #&gt;      1.ARphi 
-#&gt; -0.005931365 
+#&gt; -0.005928153 
 #&gt;            --- Variance parameters (&#39;lambda&#39;):
 #&gt; lambda = var(u) for u ~ Gaussian; 
 #&gt;    period  :  1.529  
@@ -2671,8 +2671,8 @@ summary.HLfit(mod_mix_ar1_per)
 #&gt;  --------------- Random effects ---------------
 #&gt; Family: gaussian( link = identity ) 
 #&gt;                    --- Correlation parameters:
-#&gt;     1.ARphi 
-#&gt; -0.00625637 
+#&gt;      1.ARphi 
+#&gt; -0.006255264 
 #&gt;            --- Variance parameters (&#39;lambda&#39;):
 #&gt; lambda = var(u) for u ~ Gaussian; 
 #&gt;    period  :  0.01536  
@@ -2751,14 +2751,14 @@ summary.HLfit(mod_mix_ar1_per)
 #&gt; family: gaussian( link = identity ) 
 #&gt;  ------------ Fixed effects (beta) ------------
 #&gt;                       Estimate Cond. SE t-value
-#&gt; (Intercept)             3.4950  1.05652   3.308
+#&gt; (Intercept)             3.4950  1.05651   3.308
 #&gt; as.factor(treatment)1   0.7959  0.07112  11.191
 #&gt; as.factor(treatment)2   2.0388  0.08522  23.924
 #&gt;  --------------- Random effects ---------------
 #&gt; Family: gaussian( link = identity ) 
 #&gt;                    --- Correlation parameters:
 #&gt;    1.ARphi 
-#&gt; -0.3524024 
+#&gt; -0.3524192 
 #&gt;            --- Variance parameters (&#39;lambda&#39;):
 #&gt; lambda = var(u) for u ~ Gaussian; 
 #&gt;    period  :  5.767  
@@ -2845,8 +2845,8 @@ summary.HLfit(mod_mix_ar1_cal)
 #&gt;  --------------- Random effects ---------------
 #&gt; Family: gaussian( link = identity ) 
 #&gt;                    --- Correlation parameters:
-#&gt;   1.ARphi 
-#&gt; 0.9597238 
+#&gt;  1.ARphi 
+#&gt; 0.959724 
 #&gt;            --- Variance parameters (&#39;lambda&#39;):
 #&gt; lambda = var(u) for u ~ Gaussian; 
 #&gt;    cal_time  :  0.4155  
@@ -2881,14 +2881,14 @@ summary.HLfit(mod_mix_ar1_cal)
 #&gt; family: gaussian( link = identity ) 
 #&gt;  ------------ Fixed effects (beta) ------------
 #&gt;                       Estimate Cond. SE t-value
-#&gt; (Intercept)             2.6111  2.12111   1.231
+#&gt; (Intercept)             2.6111  2.12112   1.231
 #&gt; as.factor(treatment)1   0.7993  0.07153  11.174
 #&gt; as.factor(treatment)2   2.0608  0.08528  24.164
 #&gt;  --------------- Random effects ---------------
 #&gt; Family: gaussian( link = identity ) 
 #&gt;                    --- Correlation parameters:
 #&gt;   1.ARphi 
-#&gt; 0.9802342 
+#&gt; 0.9802344 
 #&gt;            --- Variance parameters (&#39;lambda&#39;):
 #&gt; lambda = var(u) for u ~ Gaussian; 
 #&gt;    cal_time  :  5.027  
@@ -4334,7 +4334,7 @@ summary(mod_sep)
 </div>
 <div id="bias-simulations" class="section level1" number="4">
 <h1><span class="header-section-number">4</span> Bias simulations</h1>
-<pre class="r"><code>n_sim &lt;- 10000
+<pre class="r"><code>n_sim &lt;- 10000    
 set.seed(123)
 
 res_fix_step_0.25 &lt;- c()
@@ -4466,8 +4466,8 @@ t.test(res_mix_ar1_step_0.25)
 #&gt; sample estimates:
 #&gt;  mean of x 
 #&gt; 0.03686951</code></pre>
-<div id="figure-s11" class="section level2" number="4.1">
-<h2><span class="header-section-number">4.1</span> Figure S11</h2>
+<div id="figure-s12" class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> Figure S12</h2>
 <pre class="r"><code>bias_res &lt;- data.frame(model = c(rep(&quot;Fixed effect model&quot;, n_sim),
                                  rep(&quot;Spline regression&quot;, n_sim),
                                  rep(&quot;Mixed model&quot;, n_sim),

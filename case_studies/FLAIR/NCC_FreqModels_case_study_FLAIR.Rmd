@@ -38,7 +38,7 @@ library(NCC)
 
 # Introduction
 
-This file contains all code to reproduce the case study based on the FLAIR trial presented in Section 5.2 of the paper *"Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"* by Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig. The results obtained from the analyses below are presented in Table 3, Table S1, and Figure S11.
+This file contains all code to reproduce the case study based on the FLAIR trial presented in Supplementary material (Section D) of the paper *"Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"* by Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig. The results obtained from the analyses below are presented in Table S1 and Figure S12.
 
 
 # Data simulation
@@ -100,7 +100,7 @@ sim_flair <- function(lambda, trend_pattern, theta = c(-log(0.44), -log(0.13))){
 ```
 
 ```{r}
-# Simulation of 4 settings with different time trends patterns and strengths (using same simulation runs to distinguish changes due to the added time trend)
+# Simulation of 6 settings with different time trends patterns and strengths (using same simulation runs to distinguish changes due to the added time trend)
 
 set.seed(132)
 flair_data_lin_0.25 <- sim_flair(lambda = 0.25, trend_pattern = "linear")
@@ -789,7 +789,7 @@ t.test(res_mix_ar1_step_0.25)
 ```
 
 
-## Figure S11
+## Figure S12
 
 ```{r, fig.height=6, fig.width=7}
 bias_res <- data.frame(model = c(rep("Fixed effect model", n_sim),

@@ -28,8 +28,8 @@ The repository is structured as follows:
 
     - *NCC_FreqModels_case_study_PSP.Rmd*: This file includes the code
       used for illustrating the use of the methods from the paper on the
-      data from the ABBV-8E12 trial, as shown in Section 5.1. It also
-      contains the code to reproduce Figure 12, which is saved in the
+      data from the ABBV-8E12 trial, as shown in Section 5. It also
+      contains the code to reproduce Figure 13, which is saved in the
       subfolder *figures*. For data privacy reasons the dataset used for
       the illustration could not be uploaded.
     - *NCC_FreqModels_case_study_PSP_synthetic.Rmd*: This file includes
@@ -41,9 +41,9 @@ The repository is structured as follows:
 
     - *NCC_FreqModels_case_study_PSP.Rmd*: This file includes the code
       used for illustrating the use of the methods from the paper on
-      simulated data based on the FLAIR trial, as shown in Section 5.2.
-      It also contains the code to reproduce Figure S11, which is saved
-      in the subfolder *figures*.
+      simulated data based on the FLAIR trial, as shown in the
+      supplementary material (Section D). It also contains the code to
+      reproduce Figure S12, which is saved in the subfolder *figures*.
 
 ## NCC R-package
 

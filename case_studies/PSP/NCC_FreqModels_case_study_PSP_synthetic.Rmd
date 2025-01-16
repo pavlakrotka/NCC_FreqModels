@@ -39,7 +39,7 @@ set.seed(717)
 
 # Introduction
 
-This file contains all code to generate synthetic data in order to mimic the case study using PSP data presented in Section 5.1 of the paper *"Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"* by Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig.
+This file contains all code to generate synthetic data in order to mimic the case study using PSP data presented in Section 5 of the paper *"Statistical modeling to adjust for time trends in adaptive platform trials utilizing non-concurrent controls"* by Pavla Krotka, Martin Posch, Mohamed Gewily, Günter Höglinger, Marta Bofill Roig.
 
 
 # Generation of synthetic data
@@ -112,7 +112,7 @@ test_trend <- lm(response_visit_1 ~ treatment + recruitment, data_case_study)
 summary(test_trend)
 ```
 
-# Figure 12
+# Figure 13
 
 
 ```{r}
