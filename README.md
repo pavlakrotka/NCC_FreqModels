@@ -56,7 +56,7 @@ running the following code:
 
 ``` r
 # install.packages("devtools") 
-devtools::install_github("pavlakrotka/NCC@v1.3", force = TRUE, build_vignettes = TRUE)
+devtools::install_github("pavlakrotka/NCC@v1.4", force = TRUE, build_vignettes = TRUE)
 ```
 
 Please note that prior to installing the `NCC` package, the

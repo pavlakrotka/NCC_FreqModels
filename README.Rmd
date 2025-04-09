@@ -36,7 +36,7 @@ This version is labeled as Release 1.4 on [GitHub](https://github.com/pavlakrotk
 
 ```{r, message=FALSE, warning=FALSE, results=FALSE, eval=FALSE}
 # install.packages("devtools") 
-devtools::install_github("pavlakrotka/NCC@v1.3", force = TRUE, build_vignettes = TRUE)
+devtools::install_github("pavlakrotka/NCC@v1.4", force = TRUE, build_vignettes = TRUE)
 ```
 
 Please note that prior to installing the `NCC` package, the [JAGS](https://mcmc-jags.sourceforge.io/) (>=3.4.1) library needs to be installed on your computer, as it is an external dependency of the package. For more details, see https://pavlakrotka.github.io/NCC/articles/installation.html.
