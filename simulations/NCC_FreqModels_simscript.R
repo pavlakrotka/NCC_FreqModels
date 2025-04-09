@@ -5,7 +5,7 @@
 # This script contains all code to reproduce the simulations presented in the main paper and supplementary material
 
 ###########################################################################################################################################################################################
-# devtools::install_github("pavlakrotka/NCC@v1.3", force = TRUE)
+# devtools::install_github("pavlakrotka/NCC@v1.4", force = TRUE)
 library(NCC)
 library(tidyverse)
 
